@@ -9,7 +9,6 @@ use tokio::sync::Mutex;
 
 use super::item::Item;
 
-#[derive(Debug)]
 struct ProgressInner<T> {
     name: String,
     total: u64,
@@ -18,7 +17,7 @@ struct ProgressInner<T> {
     buf: T,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct Progress<T> {
     inner: Arc<Mutex<ProgressInner<T>>>,
 }
