@@ -218,4 +218,46 @@ mod tests {
         pg.write_all(&buf).await.unwrap();
         assert_eq!(pg.inner.lock().await.buf.get_ref(), &vec![0, 1, 2]);
     }
+
+    #[tokio::test]
+    async fn async_seek_test() {
+        let mut pg = Progress::new("name", Cursor::new(vec![0, 1, 2]));
+        let mut buf = vec![];
+
+        let n = pg.read_to_end(&mut buf).await.unwrap();
+        assert_eq!(n , 3);
+        assert_eq!(buf, vec![0, 1, 2]);
+
+        pg.seek(SeekFrom::Start(0)).await.unwrap();
+
+        let n = pg.read_to_end(&mut buf).await.unwrap();
+        assert_eq!(n , 3);
+        assert_eq!(buf, vec![0, 1, 2, 0, 1, 2]);
+    }
+
+    #[tokio::test]
+    async fn progress_test() {
+        let mut pg = Progress::new("name", Cursor::new(vec![]));
+        let mut buf = vec![0, 1, 2];
+
+        assert_eq!(pg.inner.lock().await.size, 0);
+        pg.write_all(&mut buf).await.unwrap();
+        assert_eq!(pg.inner.lock().await.size, 3);
+        pg.write_all(&mut buf).await.unwrap();
+        assert_eq!(pg.inner.lock().await.size, 6);
+    }
+
+    #[tokio::test]
+    async fn cancel_write_test() {
+        let mut pg = Progress::new("name", Cursor::new(vec![]));
+        let mut buf = vec![0, 1, 2];
+
+        assert_eq!(pg.inner.lock().await.canceled, false);
+        assert!(pg.write_all(&mut buf).await.is_ok());
+
+        pg.cancel().await;
+
+        assert_eq!(pg.inner.lock().await.canceled, true);
+        assert!(pg.write_all(&mut buf).await.is_err());
+    }
 }
