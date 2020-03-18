@@ -9,3 +9,5 @@ edition = "2018"
 [dependencies]
 futures = "0.3.4"
 tokio = { version = "0.2.13", features = ["full"] }
+tokio-util = { version = "0.3.0", features = ["compat"] }
+reqwest = { version = "0.10.4", features = ["stream"] }
