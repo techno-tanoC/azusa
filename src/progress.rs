@@ -1,10 +1,10 @@
 use futures::future::FutureExt;
-use std::fmt;
 use std::io::SeekFrom;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Poll, Context};
-use tokio::io::{self, AsyncRead, AsyncWrite, AsyncSeek, Result, ErrorKind};
+use tokio::io::{AsyncSeek, Result, ErrorKind};
+use tokio::prelude::*;
 use tokio::sync::Mutex;
 
 use super::item::Item;
@@ -34,11 +34,11 @@ impl<T> Progress<T> {
         Progress { inner }
     }
 
-    pub async fn set_total(&mut self) -> u64 {
-        self.inner.lock().await.total
+    pub async fn set_total(&mut self, total: u64) {
+        self.inner.lock().await.total = total;
     }
 
-    pub async fn cancele(&mut self) {
+    pub async fn cancel(&mut self) {
         self.inner.lock().await.canceled = true
     }
 
@@ -152,5 +152,69 @@ impl<T: AsyncSeek + Unpin + Send> AsyncSeek for Progress<T> {
                 Poll::Pending
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use tokio::io::AsyncReadExt;
+    use std::io::Cursor;
+
+    #[tokio::test]
+    async fn set_total_test() {
+        let mut pg = Progress::new("name", ());
+        assert_eq!(pg.to_item("").await.total, 0);
+        pg.set_total(1000).await;
+        assert_eq!(pg.to_item("").await.total, 1000);
+    }
+
+    #[tokio::test]
+    async fn cancel_test() {
+        let mut pg = Progress::new("name", ());
+        assert_eq!(pg.to_item("").await.canceled, false);
+        pg.cancel().await;
+        assert_eq!(pg.to_item("").await.canceled, true);
+    }
+
+    #[tokio::test]
+    async fn to_item_test() {
+        let pg = Progress {
+            inner: Arc::new(Mutex::new(
+                ProgressInner {
+                    name: "name".to_string(),
+                    total: 1000,
+                    size: 200,
+                    canceled: true,
+                    buf: (),
+                }
+        ))};
+        let item = Item {
+            id: "id".to_string(),
+            name: "name".to_string(),
+            total: 1000,
+            size: 200,
+            canceled: true,
+        };
+
+        assert_eq!(pg.to_item("id").await, item);
+    }
+
+    #[tokio::test]
+    async fn async_read_test() {
+        let mut pg = Progress::new("name", Cursor::new(vec![0u8, 1, 2]));
+        let mut buf = vec![];
+        let n = pg.read_to_end(&mut buf).await.unwrap();
+        assert_eq!(n , 3);
+        assert_eq!(buf, vec![0, 1, 2]);
+    }
+
+    #[tokio::test]
+    async fn async_write_test() {
+        let mut pg = Progress::new("name", Cursor::new(vec![]));
+        let buf = [0, 1, 2];
+        pg.write_all(&buf).await.unwrap();
+        assert_eq!(pg.inner.lock().await.buf.get_ref(), &vec![0, 1, 2]);
     }
 }
