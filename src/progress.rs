@@ -190,6 +190,7 @@ mod tests {
                     buf: (),
                 }
         ))};
+
         let item = Item {
             id: "id".to_string(),
             name: "name".to_string(),
@@ -203,7 +204,7 @@ mod tests {
 
     #[tokio::test]
     async fn async_read_test() {
-        let mut pg = Progress::new("name", Cursor::new(vec![0u8, 1, 2]));
+        let mut pg = Progress::new("name", Cursor::new(vec![0, 1, 2]));
         let mut buf = vec![];
         let n = pg.read_to_end(&mut buf).await.unwrap();
         assert_eq!(n , 3);
