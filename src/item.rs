@@ -1,4 +1,6 @@
-#[derive(Debug, Clone, PartialEq, Eq)]
+use serde::Serialize;
+
+#[derive(Serialize, Debug, Clone, PartialEq, Eq)]
 pub struct Item {
     pub id: String,
     pub name: String,
