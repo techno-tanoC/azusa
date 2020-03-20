@@ -6,35 +6,28 @@ use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 use super::progress::Progress;
 
-pub struct Client<'a, T> {
-    client: &'a reqwest::Client,
+pub struct Download<T> {
     res: Response,
     pg: Progress<T>,
 }
 
-impl<'a, T: AsyncWrite + Unpin + Send> Client<'a, T> {
-    pub fn new<U>(client: &'a reqwest::Client, res: Response, pg: Progress<T>) -> Self
-    where
-        U: AsRef<str>,
-    {
-        Client { client, res, pg }
+impl<T: AsyncWrite + Unpin + Send> Download<T> {
+    pub fn new(res: Response, pg: Progress<T>) -> Self {
+        Download { res, pg }
     }
 
-    pub async fn start(mut self) -> Progress<T> {
+    pub async fn start(mut self) {
         if self.res.status().is_success() {
             if let Some(cl) = Self::content_length(&self.res) {
-                self.pg.set_total(cl);
+                self.pg.set_total(cl).await;
             }
-            let Client { res, mut pg, .. } = self;
+            let Download { res, mut pg, .. } = self;
             let mut stream = res
                 .bytes_stream()
                 .map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e))
                 .into_async_read()
                 .compat();
             Self::copy(&mut stream, &mut pg).await;
-            pg
-        } else {
-            self.pg
         }
     }
 
@@ -43,7 +36,7 @@ impl<'a, T: AsyncWrite + Unpin + Send> Client<'a, T> {
         R: AsyncRead + Unpin + Send,
         W: AsyncWrite + Unpin + Send,
     {
-        let result = io::copy(reader, writer).await;
+        io::copy(reader, writer).await.unwrap();
     }
 
     fn content_length(res: &Response) -> Option<u64> {
