@@ -7,6 +7,7 @@ use tokio::io::{self, BufReader, BufWriter, AsyncSeek};
 use tokio::prelude::*;
 use tokio::sync::Mutex;
 
+#[derive(Debug, Clone)]
 pub struct LockCopy(Arc<Mutex<PathBuf>>);
 
 impl LockCopy {
@@ -23,7 +24,7 @@ impl LockCopy {
         let s = self.0.lock().await;
         let fresh = Self::fresh_name(&*s, name, ext);
         let dest = File::create(fresh).await.unwrap();
-        from.seek(SeekFrom::Start(0));
+        from.seek(SeekFrom::Start(0)).await.unwrap();
         let (mut from, mut dest) = (BufReader::new(from), BufWriter::new(dest));
         io::copy(&mut from, &mut dest).await.unwrap();
     }
