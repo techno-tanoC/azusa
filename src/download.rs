@@ -1,6 +1,6 @@
 use futures::stream::TryStreamExt;
 use reqwest::{Response, header};
-use tokio::io;
+use tokio::io::{self, BufReader, BufWriter};
 use tokio::prelude::*;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
@@ -16,7 +16,7 @@ impl<T: AsyncWrite + Unpin + Send> Download<T> {
         Download { res, pg }
     }
 
-    pub async fn start(mut self) {
+    pub async fn start(mut self) -> bool {
         if self.res.status().is_success() {
             if let Some(cl) = Self::content_length(&self.res) {
                 self.pg.set_total(cl).await;
@@ -27,16 +27,19 @@ impl<T: AsyncWrite + Unpin + Send> Download<T> {
                 .map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e))
                 .into_async_read()
                 .compat();
-            Self::copy(&mut stream, &mut pg).await;
+            Self::copy(&mut stream, &mut pg).await
+        } else {
+            false
         }
     }
 
-    async fn copy<R, W>(reader: &mut R, writer: &mut W)
+    async fn copy<R, W>(reader: &mut R, writer: &mut W) -> bool
     where
         R: AsyncRead + Unpin + Send,
         W: AsyncWrite + Unpin + Send,
     {
-        io::copy(reader, writer).await.unwrap();
+        let (mut reader, mut writer) = (BufReader::new(reader), BufWriter::new(writer));
+        io::copy(&mut reader, &mut writer).await.is_ok()
     }
 
     fn content_length(res: &Response) -> Option<u64> {
