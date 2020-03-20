@@ -1,4 +1,5 @@
 use futures::future::FutureExt;
+use std::fmt;
 use std::io::SeekFrom;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -15,6 +16,17 @@ struct ProgressInner<T> {
     size: u64,
     canceled: bool,
     buf: T,
+}
+
+impl<T> fmt::Debug for ProgressInner<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ProgressInner")
+            .field("name", &self.name)
+            .field("total", &self.total)
+            .field("size", &self.size)
+            .field("canceled", &self.canceled)
+            .finish()
+    }
 }
 
 pub struct Progress<T> {
