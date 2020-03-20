@@ -17,6 +17,7 @@ name = "azusa"
 version = "0.1.0"
 dependencies = [
  "futures",
+ "indexmap",
  "reqwest",
  "serde",
  "serde_json",
