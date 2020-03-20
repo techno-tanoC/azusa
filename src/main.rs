@@ -24,7 +24,7 @@ async fn main() {
 }
 
 async fn fetch(app: App) -> Result<impl warp::Reply, Infallible> {
-    let vec: Vec<_> = app.table.to_items().await;
+    let vec = app.table.to_items().await;
     Ok(warp::reply::json(&vec))
 }
 
