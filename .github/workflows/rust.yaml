@@ -10,7 +10,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install libssl-dev
-      run: apt update && apt install -y libssl-dev pkg-config
+      run: |
+        apt update
+        apt install -y --no-install-recommends build-essential musl-tools libssl-dev
+    - name: add target
+      run: rustup target add x86_64-unknown-linux-musl
     - name: Build
       run: cargo build --verbose
     - name: Run tests
