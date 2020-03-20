@@ -17,9 +17,14 @@ struct ProgressInner<T> {
     buf: T,
 }
 
-#[derive(Clone)]
 pub struct Progress<T> {
     inner: Arc<Mutex<ProgressInner<T>>>,
+}
+
+impl<T> std::clone::Clone for Progress<T> {
+    fn clone(&self) -> Self {
+        Progress { inner: self.inner.clone() }
+    }
 }
 
 impl<T> Progress<T> {
