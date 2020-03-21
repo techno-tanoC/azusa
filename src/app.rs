@@ -34,7 +34,7 @@ impl App {
         let res = self.client.get(url.as_ref()).send().await.unwrap();
         let success = Download::new(res, pg.clone()).start().await;
         if success {
-            self.lock_copy.rewind_copy(&mut pg, &name, &ext).await;
+            self.lock_copy.copy(&mut pg, &name, &ext).await;
         }
 
         self.table.delete(id.to_string()).await;
