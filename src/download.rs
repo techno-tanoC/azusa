@@ -32,7 +32,9 @@ impl<T: AsyncWrite + Unpin + Send> Download<T> {
             false
         }
     }
+}
 
+impl<T> Download<T> {
     async fn copy<R, W>(reader: &mut R, writer: &mut W) -> bool
     where
         R: AsyncRead + Unpin + Send,
@@ -46,5 +48,27 @@ impl<T: AsyncWrite + Unpin + Send> Download<T> {
         res.headers()
             .get(header::CONTENT_LENGTH)?
             .to_str().ok()?.parse().ok()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn content_length_test() {
+        let body: reqwest::Body = vec![].into();
+        let res = http::response::Response::new(body).into();
+        assert!(Download::<()>::content_length(&res).is_none());
+
+        let body: reqwest::Body = vec![].into();
+        let mut res: reqwest::Response = http::response::Response::new(body).into();
+        res.headers_mut().insert(header::CONTENT_LENGTH, "invalid".parse().unwrap());
+        assert!(Download::<()>::content_length(&res).is_none());
+
+        let body: reqwest::Body = vec![].into();
+        let mut res: reqwest::Response = http::response::Response::new(body).into();
+        res.headers_mut().insert(header::CONTENT_LENGTH, "1000".parse().unwrap());
+        assert_eq!(Download::<()>::content_length(&res).unwrap(), 1000);
     }
 }
