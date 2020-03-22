@@ -42,3 +42,29 @@ impl<K, V> std::clone::Clone for Table<K, V> {
         Table(self.0.clone())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn add_test() {
+        let table = Table::new();
+        table.add("1", true).await;
+        table.add("2", false).await;
+        assert_eq!(table.0.lock().await.iter().collect::<Vec<_>>(), vec![(&"1".to_string(), &true), (&"2".to_string(), &false)]);
+    }
+
+    #[tokio::test]
+    async fn delete_test() {
+        let table = Table::new();
+        table.add("1", true).await;
+        table.add("2", false).await;
+        assert_eq!(table.0.lock().await.len(), 2);
+
+        table.delete("1").await;
+        assert_eq!(table.0.lock().await.iter().collect::<Vec<_>>(), vec![(&"2".to_string(), &false)]);
+        table.delete("2").await;
+        assert_eq!(table.0.lock().await.iter().collect::<Vec<_>>(), vec![]);
+    }
+}
