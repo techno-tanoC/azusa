@@ -23,6 +23,7 @@ name = "azusa"
 version = "0.1.0"
 dependencies = [
  "futures",
+ "http",
  "indexmap",
  "reqwest",
  "serde",
