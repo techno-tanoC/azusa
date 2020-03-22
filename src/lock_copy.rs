@@ -15,7 +15,7 @@ impl LockCopy {
         LockCopy(Arc::new(Mutex::new(path.as_ref().to_path_buf())))
     }
 
-    pub async fn rewind_copy<R, S, T>(&self, from: &mut R, name: &S, ext: &T)
+    pub async fn copy<R, S, T>(&self, from: &mut R, name: &S, ext: &T)
     where
         R: AsyncRead + AsyncSeek + Unpin + Send,
         S: AsRef<str>,
@@ -23,10 +23,18 @@ impl LockCopy {
     {
         let s = self.0.lock().await;
         let fresh = Self::fresh_name(&*s, name, ext);
-        let dest = File::create(fresh).await.unwrap();
-        from.seek(SeekFrom::Start(0)).await.unwrap();
-        let (mut from, mut dest) = (BufReader::new(from), BufWriter::new(dest));
-        io::copy(&mut from, &mut dest).await.unwrap();
+        let mut dest = File::create(fresh).await.unwrap();
+        Self::rewind_copy(from, &mut dest).await;
+    }
+
+    async fn rewind_copy<R, W>(reader: &mut R, writer: &mut W)
+    where
+        R: AsyncRead + AsyncSeek + Unpin + Send,
+        W: AsyncWrite + Unpin + Send,
+    {
+        reader.seek(SeekFrom::Start(0)).await.unwrap();
+        let (mut reader, mut writer) = (BufReader::new(reader), BufWriter::new(writer));
+        io::copy(&mut reader, &mut writer).await.unwrap();
     }
 
     fn fresh_name<P, S, T>(path: &P, name: &S, ext: &T) -> PathBuf
@@ -65,5 +73,55 @@ impl LockCopy {
         };
 
         name.as_ref().to_string() + &count + &ext
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::io::Cursor;
+
+    #[tokio::test]
+    async fn copy_test() {
+        let dir = tempfile::tempdir().unwrap();
+        let lock_copy = LockCopy::new(&dir);
+        let mut from = File::open("Cargo.lock").await.unwrap();
+        let (name, ext) = ("test", "lock");
+        lock_copy.copy(&mut from, &name, &ext).await;
+    }
+
+    #[tokio::test]
+    async fn rewind_copy_test() {
+        let mut from = Cursor::new(vec![]);
+        from.write_all(&[0u8, 1, 2]).await.unwrap();
+        let mut dest = Cursor::new(vec![]);
+        LockCopy::rewind_copy(&mut from, &mut dest).await;
+        assert_eq!(from.position(), 3);
+        assert_eq!(dest.into_inner(), vec![0, 1, 2]);
+    }
+
+    #[test]
+    fn test_fresh_name() {
+        let fresh = LockCopy::fresh_name(&".", &"dummy", &"toml");
+        assert_eq!(fresh.to_string_lossy(), "./dummy.toml".to_string());
+
+        let fresh = LockCopy::fresh_name(&".", &"Cargo", &"toml");
+        assert_eq!(fresh.to_string_lossy(), "./Cargo(1).toml".to_string());
+    }
+
+    #[test]
+    fn test_build_name() {
+        let name = LockCopy::build_name(&"hello", 0, &"jpg");
+        assert_eq!(name, "hello.jpg");
+
+        let name = LockCopy::build_name(&"hello", 1, &"jpg");
+        assert_eq!(name, "hello(1).jpg");
+
+        let name = LockCopy::build_name(&"hello", 0, &"");
+        assert_eq!(name, "hello");
+
+        let name = LockCopy::build_name(&"hello", 1, &"");
+        assert_eq!(name, "hello(1)");
     }
 }
