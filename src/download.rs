@@ -55,6 +55,49 @@ impl<T> Download<T> {
 mod tests {
     use super::*;
 
+    use std::io::Cursor;
+    use crate::progress::Progress;
+
+    #[tokio::test]
+    async fn run_without_content_length_test() {
+        let pg = Progress::new("name", Cursor::new(vec![]));
+        let body: reqwest::Body = vec![0, 1, 2].into();
+        let res = http::response::Response::new(body).into();
+
+        let item = pg.to_item("id").await;
+        assert_eq!((item.size, item.total), (0, 0));
+
+        Download::new(res, pg.clone()).run().await;
+
+        let item = pg.to_item("id").await;
+        assert_eq!((item.size, item.total), (3, 0));
+    }
+
+    #[tokio::test]
+    async fn run_with_content_length_test() {
+        let pg = Progress::new("name", Cursor::new(vec![]));
+        let body: reqwest::Body = vec![0, 1, 2].into();
+        let mut res: reqwest::Response = http::response::Response::new(body).into();
+        res.headers_mut().insert(header::CONTENT_LENGTH, "3".parse().unwrap());
+
+        let item = pg.to_item("id").await;
+        assert_eq!((item.size, item.total), (0, 0));
+
+        Download::new(res, pg.clone()).run().await;
+
+        let item = pg.to_item("id").await;
+        assert_eq!((item.size, item.total), (3, 3));
+    }
+
+    #[tokio::test]
+    async fn copy_test() {
+        let mut reader = Cursor::new(vec![0, 1, 2]);
+        let mut writer = Cursor::new(vec![]);
+        let flag = Download::<()>::copy(&mut reader, &mut writer).await;
+        assert!(flag);
+        assert_eq!(reader, writer);
+    }
+
     #[test]
     fn content_length_test() {
         let body: reqwest::Body = vec![].into();
