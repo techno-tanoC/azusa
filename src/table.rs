@@ -47,6 +47,9 @@ impl<K, V> std::clone::Clone for Table<K, V> {
 mod tests {
     use super::*;
 
+    use crate::item::Item;
+    use crate::progress::Progress;
+
     #[tokio::test]
     async fn add_test() {
         let table = Table::new();
@@ -66,5 +69,45 @@ mod tests {
         assert_eq!(table.0.lock().await.iter().collect::<Vec<_>>(), vec![(&"2".to_string(), &false)]);
         table.delete("2").await;
         assert_eq!(table.0.lock().await.iter().collect::<Vec<_>>(), vec![]);
+    }
+
+    #[tokio::test]
+    async fn cancel_test() {
+        let table = Table::new();
+        let pg = Progress::new("name", ());
+        table.add("1", pg.clone()).await;
+
+        assert!(!pg.to_item("1").await.canceled);
+        table.cancel("1").await;
+        assert!(pg.to_item("1").await.canceled);
+    }
+
+    #[tokio::test]
+    async fn to_items_test() {
+        let table = Table::new();
+        let pg1 = Progress::new("name", ());
+        table.add("1", pg1.clone()).await;
+        let pg2 = Progress::new("name", ());
+        table.add("2", pg2.clone()).await;
+
+        assert_eq!(
+            table.to_items().await,
+            vec![
+                Item {
+                    id: "1".to_string(),
+                    name: "name".to_string(),
+                    total: 0,
+                    size: 0,
+                    canceled: false
+                },
+                Item {
+                    id: "2".to_string(),
+                    name: "name".to_string(),
+                    total: 0,
+                    size: 0,
+                    canceled: false
+                },
+            ]
+        );
     }
 }
