@@ -16,12 +16,12 @@ impl<T: AsyncWrite + Unpin + Send> Download<T> {
         Download { res, pg }
     }
 
-    pub async fn start(mut self) -> bool {
+    pub async fn run(mut self) -> bool {
         if self.res.status().is_success() {
             if let Some(cl) = Self::content_length(&self.res) {
                 self.pg.set_total(cl).await;
             }
-            let Download { res, mut pg, .. } = self;
+            let Download { res, mut pg } = self;
             let mut stream = res
                 .bytes_stream()
                 .map_err(|e| futures::io::Error::new(futures::io::ErrorKind::Other, e))

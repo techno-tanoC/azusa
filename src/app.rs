@@ -32,7 +32,7 @@ impl App {
         self.table.add(id.to_string(), pg.clone()).await;
 
         let res = self.client.get(url.as_ref()).send().await.unwrap();
-        let success = Download::new(res, pg.clone()).start().await;
+        let success = Download::new(res, pg.clone()).run().await;
         if success {
             self.lock_copy.copy(&mut pg, &name, &ext).await;
         }
