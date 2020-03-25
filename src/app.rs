@@ -1,5 +1,7 @@
 use std::path::Path;
 use tokio::fs::File;
+use tokio::io::AsyncSeek;
+use tokio::prelude::*;
 use uuid::Uuid;
 
 use super::download::Download;
@@ -30,13 +32,18 @@ impl App {
         let file = File::from_std(tempfile::tempfile().unwrap());
         let mut pg = Progress::new(name.as_ref(), file);
         self.table.add(id.to_string(), pg.clone()).await;
+        self.do_download(&mut pg, url, name, ext).await;
+        self.table.delete(id.to_string()).await;
+    }
 
+    async fn do_download<T>(&self, pg: &mut Progress<T>, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>)
+    where
+        T: AsyncRead + AsyncWrite + AsyncSeek + Unpin + Send,
+    {
         let res = self.client.get(url.as_ref()).send().await.unwrap();
         let success = Download::new(res, pg.clone()).run().await;
         if success {
-            self.lock_copy.copy(&mut pg, &name, &ext).await;
+            self.lock_copy.copy(pg, &name, &ext).await;
         }
-
-        self.table.delete(id.to_string()).await;
     }
 }
