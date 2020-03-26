@@ -19,4 +19,4 @@ tempfile = "3.1.0"
 warp = "0.2.2"
 
 [dev-dependencies]
-http = "0.2.0"
+http = "0.2.1"
