@@ -76,8 +76,11 @@ fn routes(app: App) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rej
         .and(with_app(app.clone()))
         .and_then(cancel);
 
+    let assets = warp::path("assets")
+        .and(warp::fs::dir("assets"));
+
     let cors = warp::cors().allow_methods(vec!["GET", "POST", "DELETE"]);
-    get.or(post).or(delete).with(cors)
+    get.or(post).or(delete).or(assets).with(cors)
 }
 
 fn with_app(app: App) ->  impl Filter<Extract = (App,), Error = std::convert::Infallible> + Clone {
