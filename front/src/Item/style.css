@@ -1,0 +1,38 @@
+.card {
+  /* box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 4px, rgba(0, 0, 0, 0.1) 0px 1px 4px; */
+  box-shadow:2px 2px 4px 0px #ccc;
+  overflow: hidden;
+
+  margin-bottom: 8px;
+  position: relative;
+  font-size: 0.8em;
+}
+
+.progress {
+  position: absolute;
+  z-index: -1;
+  height: 100%;
+  background-color: #eee;
+}
+
+.content {
+  padding: 5px;
+}
+
+.name {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.button {
+  padding: 3px 5px;
+  border-style: none;
+  background-color: #248;
+  color: #fff;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+}
