@@ -4,6 +4,7 @@ mod lock_copy;
 mod download;
 mod table;
 mod app;
+mod error;
 
 use serde::Deserialize;
 use std::convert::Infallible;
@@ -37,7 +38,10 @@ struct Start {
 
 async fn start(start: Start, app: App) -> Result<impl warp::Reply, Infallible> {
     tokio::spawn(async move {
-        app.download(&start.url, &start.name, &start.ext).await;
+        let result = app.download(&start.url, &start.name, &start.ext).await;
+        if let Err(e) = result {
+            println!("{:?}", e);
+        }
     });
 
     Ok(StatusCode::CREATED)
