@@ -5,6 +5,7 @@ use tokio::prelude::*;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
 use super::progress::Progress;
+use super::error::{Error, Result};
 
 pub struct Download<T> {
     res: Response,
@@ -16,7 +17,7 @@ impl<T: AsyncWrite + Unpin + Send> Download<T> {
         Download { res, pg }
     }
 
-    pub async fn run(mut self) -> bool {
+    pub async fn run(mut self) -> Result<()> {
         if self.res.status().is_success() {
             if let Some(cl) = Self::content_length(&self.res) {
                 self.pg.set_total(cl).await;
@@ -29,19 +30,20 @@ impl<T: AsyncWrite + Unpin + Send> Download<T> {
                 .compat();
             Self::copy(&mut stream, &mut pg).await
         } else {
-            false
+            Err(Error::NonSuccessStatusError())
         }
     }
 }
 
 impl<T> Download<T> {
-    async fn copy<R, W>(reader: &mut R, writer: &mut W) -> bool
+    async fn copy<R, W>(reader: &mut R, writer: &mut W) -> Result<()>
     where
         R: AsyncRead + Unpin + Send,
         W: AsyncWrite + Unpin + Send,
     {
         let (mut reader, mut writer) = (BufReader::new(reader), BufWriter::new(writer));
-        io::copy(&mut reader, &mut writer).await.is_ok()
+        io::copy(&mut reader, &mut writer).await?;
+        Ok(())
     }
 
     fn content_length(res: &Response) -> Option<u64> {
@@ -67,7 +69,7 @@ mod tests {
         let item = pg.to_item("id").await;
         assert_eq!((item.size, item.total), (0, 0));
 
-        Download::new(res, pg.clone()).run().await;
+        Download::new(res, pg.clone()).run().await.unwrap();
 
         let item = pg.to_item("id").await;
         assert_eq!((item.size, item.total), (3, 0));
@@ -83,7 +85,7 @@ mod tests {
         let item = pg.to_item("id").await;
         assert_eq!((item.size, item.total), (0, 0));
 
-        Download::new(res, pg.clone()).run().await;
+        Download::new(res, pg.clone()).run().await.unwrap();
 
         let item = pg.to_item("id").await;
         assert_eq!((item.size, item.total), (3, 3));
@@ -93,7 +95,7 @@ mod tests {
     async fn copy_test() {
         let mut reader = Cursor::new(vec![0, 1, 2]);
         let mut writer = Cursor::new(vec![]);
-        let flag = Download::<()>::copy(&mut reader, &mut writer).await;
+        let flag = Download::<()>::copy(&mut reader, &mut writer).await.is_ok();
         assert!(flag);
         assert_eq!(reader, writer);
     }
