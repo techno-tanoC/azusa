@@ -4,11 +4,11 @@ use tokio::io::AsyncSeek;
 use tokio::prelude::*;
 use uuid::Uuid;
 
-use super::download::Download;
-use super::lock_copy::LockCopy;
-use super::progress::Progress;
-use super::table::Table;
-use super::error::Result;
+use crate::download::Download;
+use crate::lock_copy::LockCopy;
+use crate::progress::Progress;
+use crate::table::Table;
+use crate::error::Result;
 
 #[derive(Clone)]
 pub struct App {
