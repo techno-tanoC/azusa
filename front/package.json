@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "main": "index.js",
   "scripts": {
-    "dev": "parcel src/index.html",
-    "build": "parcel build src/index.html"
+    "dev": "parcel src/index.html --public-url 'http://localhost:3000/assets/' --out-dir '../assets'",
+    "build": "parcel build src/index.html --public-url '/assets/' --out-dir '../assets'"
   },
   "license": "MIT",
   "dependencies": {
