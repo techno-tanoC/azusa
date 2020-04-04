@@ -8,6 +8,7 @@ use super::download::Download;
 use super::lock_copy::LockCopy;
 use super::progress::Progress;
 use super::table::Table;
+use super::error::Result;
 
 #[derive(Clone)]
 pub struct App {
@@ -27,23 +28,26 @@ impl App {
         App { client, lock_copy, table }
     }
 
-    pub async fn download(&self, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>) {
+    pub async fn download(&self, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()> {
         let id = Uuid::new_v4();
-        let file = File::from_std(tempfile::tempfile().unwrap());
+        let file = File::from_std(tempfile::tempfile()?);
         let mut pg = Progress::new(name.as_ref(), file);
         self.table.add(id.to_string(), pg.clone()).await;
-        self.do_download(&mut pg, url, name, ext).await;
+        let ret = self.do_download(&mut pg, url, name, ext).await;
         self.table.delete(id.to_string()).await;
+        ret
     }
 
-    async fn do_download<T>(&self, pg: &mut Progress<T>, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>)
+    async fn do_download<T>(&self, pg: &mut Progress<T>, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
     where
         T: AsyncRead + AsyncWrite + AsyncSeek + Unpin + Send,
     {
-        let res = self.client.get(url.as_ref()).send().await.unwrap();
-        let success = Download::new(res, pg.clone()).run().await;
-        if success {
-            self.lock_copy.copy(pg, &name, &ext).await;
+        let res = self.client.get(url.as_ref()).send().await?;
+        let ret = Download::new(res, pg.clone()).run().await;
+        if let Ok(()) = ret {
+            self.lock_copy.copy(pg, &name, &ext).await
+        } else {
+            ret
         }
     }
 }
