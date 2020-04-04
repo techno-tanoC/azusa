@@ -1,3 +1,4 @@
+#[macro_use] extern crate log;
 mod progress;
 mod item;
 mod lock_copy;
@@ -15,6 +16,7 @@ use app::App;
 
 #[tokio::main]
 async fn main() {
+    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
     let path = std::env::var("VOLUME").unwrap_or_else(|_| ".".to_string());
     let port = std::env::var("PORT")
         .unwrap_or_else(|_| "3000".to_string())
