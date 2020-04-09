@@ -29,7 +29,7 @@ async fn main() {
 }
 
 async fn fetch(app: App) -> Result<impl warp::Reply, Infallible> {
-    debug!("[GET] /download");
+    trace!("[GET] /download");
 
     let vec = app.table.to_items().await;
     Ok(warp::reply::json(&vec))
