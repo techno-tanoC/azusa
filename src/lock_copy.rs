@@ -23,6 +23,8 @@ impl LockCopy {
         S: AsRef<str>,
         T: AsRef<str>,
     {
+        debug!("lock_copy::copy name: {:?} ext: {:?}", name.as_ref(), ext.as_ref());
+
         let s = self.0.lock().await;
         let fresh = Self::fresh_name(&*s, name, ext);
         let mut dest = File::create(fresh).await?;
