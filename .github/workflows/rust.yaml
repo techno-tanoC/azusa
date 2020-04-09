@@ -25,7 +25,7 @@ jobs:
         path: target
         key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
     - name: install libssl-dev
-      run: apt update && apt install -y libssl-dev pkg-config
+      run: apt update && apt install -y libssl-dev pkg-config build-essential
     - name: Build
       run: cargo build --verbose
     - name: Run tests
