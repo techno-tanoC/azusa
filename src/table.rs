@@ -2,8 +2,8 @@ use indexmap::IndexMap;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
-use super::progress::Progress;
-use super::item::Item;
+use crate::progress::Progress;
+use crate::item::Item;
 
 pub struct Table<K, V>(Arc<Mutex<IndexMap<K, V>>>);
 

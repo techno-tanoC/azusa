@@ -7,7 +7,7 @@ use tokio::io::{self, BufReader, BufWriter, AsyncSeek};
 use tokio::prelude::*;
 use tokio::sync::Mutex;
 
-use super::error::Result;
+use crate::error::Result;
 
 #[derive(Debug, Clone)]
 pub struct LockCopy(Arc<Mutex<PathBuf>>);
