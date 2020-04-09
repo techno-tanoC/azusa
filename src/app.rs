@@ -30,6 +30,9 @@ impl App {
 
     pub async fn download(&self, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()> {
         let id = Uuid::new_v4();
+
+        debug!("app::download id: {:?} url: {:?} name: {:?} ext: {:?}", id, url.as_ref(), name.as_ref(), ext.as_ref());
+
         let file = File::from_std(tempfile::tempfile()?);
         let mut pg = Progress::new(name.as_ref(), file);
         self.table.add(id.to_string(), pg.clone()).await;

@@ -48,7 +48,7 @@ async fn start(start: Start, app: App) -> Result<impl warp::Reply, Infallible> {
     tokio::spawn(async move {
         let result = app.download(&start.url, &start.name, &start.ext).await;
         if let Err(e) = result {
-            println!("{:?}", e);
+            warn!("{:?}", e);
         }
     });
 
