@@ -4,11 +4,11 @@ use tokio::io::AsyncSeek;
 use tokio::prelude::*;
 use uuid::Uuid;
 
-use super::download::Download;
-use super::lock_copy::LockCopy;
-use super::progress::Progress;
-use super::table::Table;
-use super::error::Result;
+use crate::download::Download;
+use crate::lock_copy::LockCopy;
+use crate::progress::Progress;
+use crate::table::Table;
+use crate::error::Result;
 
 #[derive(Clone)]
 pub struct App {
@@ -30,6 +30,9 @@ impl App {
 
     pub async fn download(&self, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()> {
         let id = Uuid::new_v4();
+
+        debug!("app::download id: {:?} url: {:?} name: {:?} ext: {:?}", id, url.as_ref(), name.as_ref(), ext.as_ref());
+
         let file = File::from_std(tempfile::tempfile()?);
         let mut pg = Progress::new(name.as_ref(), file);
         self.table.add(id.to_string(), pg.clone()).await;

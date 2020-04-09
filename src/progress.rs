@@ -8,7 +8,7 @@ use tokio::io::{AsyncSeek, Result, ErrorKind};
 use tokio::prelude::*;
 use tokio::sync::Mutex;
 
-use super::item::Item;
+use crate::item::Item;
 
 struct ProgressInner<T> {
     name: String,

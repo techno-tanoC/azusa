@@ -4,8 +4,8 @@ use tokio::io::{self, BufReader, BufWriter};
 use tokio::prelude::*;
 use tokio_util::compat::FuturesAsyncReadCompatExt;
 
-use super::progress::Progress;
-use super::error::{Error, Result};
+use crate::progress::Progress;
+use crate::error::{Error, Result};
 
 pub struct Download<T> {
     res: Response,

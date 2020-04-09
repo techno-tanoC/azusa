@@ -1,3 +1,4 @@
+#[macro_use] extern crate log;
 mod progress;
 mod item;
 mod lock_copy;
@@ -15,16 +16,21 @@ use app::App;
 
 #[tokio::main]
 async fn main() {
+    log4rs::init_file("config/log4rs.yaml", Default::default()).unwrap();
     let path = std::env::var("VOLUME").unwrap_or_else(|_| ".".to_string());
     let port = std::env::var("PORT")
         .unwrap_or_else(|_| "3000".to_string())
         .parse()
         .expect("Invalit PORT");
     let app = App::new(&path);
+    info!("start server on {}", port);
     warp::serve(routes(app)).run(([0, 0, 0, 0], port)).await;
+
 }
 
 async fn fetch(app: App) -> Result<impl warp::Reply, Infallible> {
+    debug!("[GET] /download");
+
     let vec = app.table.to_items().await;
     Ok(warp::reply::json(&vec))
 }
@@ -37,10 +43,12 @@ struct Start {
 }
 
 async fn start(start: Start, app: App) -> Result<impl warp::Reply, Infallible> {
+    info!("[POST] /download {:?}", &start);
+
     tokio::spawn(async move {
         let result = app.download(&start.url, &start.name, &start.ext).await;
         if let Err(e) = result {
-            println!("{:?}", e);
+            warn!("{:?}", e);
         }
     });
 
@@ -53,6 +61,8 @@ struct Cancel {
 }
 
 async fn cancel(cancel: Cancel, app: App) -> Result<impl warp::Reply, Infallible> {
+    info!("[DELETE] /download {:?}", &cancel);
+
     tokio::spawn(async move {
         app.table.cancel(&cancel.id).await;
     });
