@@ -93,7 +93,10 @@ fn routes(app: App) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rej
     let assets = warp::path("assets")
         .and(warp::fs::dir("assets"));
 
-    let cors = warp::cors().allow_methods(vec!["GET", "POST", "DELETE"]);
+    let cors = warp::cors()
+        .allow_methods(vec!["GET", "POST", "DELETE"])
+        .allow_headers(vec!["Content-Type"]);
+
     get.or(post).or(delete).or(assets).with(cors)
 }
 
