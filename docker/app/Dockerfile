@@ -23,7 +23,8 @@ COPY . .
 RUN yarn build
 
 
-FROM debian:buster-slim
+# FROM debian:buster-slim
+FROM alpine:3.11
 
 WORKDIR /app
 
