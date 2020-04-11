@@ -19,7 +19,7 @@ root:
 
 loggers:
   azusa:
-    level: debug
+    level: info
     appenders:
       - stdout
 
