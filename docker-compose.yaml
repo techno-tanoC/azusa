@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  app:
+    image: techno/azusa:0.1.0
+    command: ./azusa
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    environment:
+      VOLUME: ./data
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./log:/app/log
+      - ./data:/app/data
+    tty: true
+    stdin_open: true

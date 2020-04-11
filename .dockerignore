@@ -1,0 +1,8 @@
+/.git
+/docker
+
+# .gitignore
+/target
+/assets
+/log
+/data
