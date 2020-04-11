@@ -25,7 +25,6 @@ async fn main() {
     let app = App::new(&path);
     info!("start server on {}", port);
     warp::serve(routes(app)).run(([0, 0, 0, 0], port)).await;
-
 }
 
 async fn fetch(app: App) -> Result<impl warp::Reply, Infallible> {
