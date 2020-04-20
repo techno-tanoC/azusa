@@ -2,7 +2,7 @@ import React from 'react'
 import style from './style.css'
 
 const deleteItem = id => {
-  fetch(`http://localhost:3000/download?id=${id}`, {
+  fetch(`/download?id=${id}`, {
     method: 'DELETE'
   })
 }

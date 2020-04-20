@@ -10,7 +10,7 @@ export default class ItemList extends React.Component {
 
   load() {
     console.log(this.state)
-    fetch("http://localhost:3000/download", {
+    fetch("/download", {
       mode: 'cors'
     })
       .then(res => res.json())
