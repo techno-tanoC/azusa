@@ -2,7 +2,7 @@ version: '3'
 
 services:
   app:
-    image: techno/azusa:0.1.0
+    image: techno/azusa:staging
     command: ./azusa
     build:
       context: .
