@@ -1,3 +1,4 @@
+use std::time::Duration;
 use std::path::Path;
 use tokio::fs::File;
 use tokio::io::AsyncSeek;
@@ -20,6 +21,7 @@ pub struct App {
 impl App {
     pub fn new(path: impl AsRef<Path>) -> Self {
         let client = reqwest::ClientBuilder::new()
+            .connect_timeout(Duration::from_secs(30))
             .danger_accept_invalid_certs(true)
             .build()
             .expect("failed ClientBuilder::build()");
