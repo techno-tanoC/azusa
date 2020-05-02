@@ -20,7 +20,7 @@ FROM node:12.16.1-alpine3.11
 WORKDIR /build
 
 COPY . .
-RUN yarn build
+RUN yarn install && yarn build
 
 
 # FROM debian:buster-slim

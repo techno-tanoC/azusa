@@ -6,3 +6,6 @@
 /assets
 /log
 /data
+
+# front
+/front/node_modules
