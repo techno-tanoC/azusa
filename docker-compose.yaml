@@ -3,10 +3,11 @@ version: '3'
 services:
   app:
     image: techno/azusa:staging
-    command: ./azusa
     build:
       context: .
       dockerfile: docker/app/Dockerfile
+    command: ./azusa
+    user: "1000:1000"
     environment:
       VOLUME: ./data
     ports:

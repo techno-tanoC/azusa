@@ -33,6 +33,4 @@ COPY config config
 COPY --from=0 /build/target/x86_64-unknown-linux-musl/release/azusa azusa
 COPY --from=1 /build/assets assets
 
-RUN chown -R 1000:1000 config assets azusa
-USER 1000:1000
 CMD ["./azusa"]
