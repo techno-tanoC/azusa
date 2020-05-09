@@ -9,7 +9,7 @@ pub struct Download<'a, T> {
     pg: Progress<T>,
 }
 
-impl<'a, 'b, T: AsyncWrite + Unpin + Send> Download<'a, T> {
+impl<'a, T: AsyncWrite + Unpin + Send> Download<'a, T> {
     pub fn new(res: &'a mut Response, pg: Progress<T>) -> Self {
         Download { res, pg }
     }
