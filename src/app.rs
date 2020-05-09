@@ -1,7 +1,6 @@
 use std::time::Duration;
 use std::path::Path;
 use tokio::fs::File;
-use tokio::io::AsyncSeek;
 use tokio::prelude::*;
 use uuid::Uuid;
 
@@ -46,7 +45,7 @@ impl App {
 
     async fn do_download<T, P>(&self, pg: Progress<T>, url: impl AsRef<str>, path: &P, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
     where
-        T: AsyncRead + AsyncWrite + AsyncSeek + Unpin + Send,
+        T: AsyncWrite + Unpin + Send,
         P: AsRef<Path>,
     {
         let res = self.client.get(url.as_ref()).send().await?;
