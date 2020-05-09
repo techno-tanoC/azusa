@@ -32,3 +32,5 @@ COPY config config
 
 COPY --from=0 /build/target/x86_64-unknown-linux-musl/release/azusa azusa
 COPY --from=1 /build/assets assets
+
+CMD ["./azusa"]
