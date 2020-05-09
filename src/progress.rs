@@ -1,10 +1,9 @@
 use futures::future::FutureExt;
 use std::fmt;
-use std::io::SeekFrom;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Poll, Context};
-use tokio::io::{AsyncSeek, Result, ErrorKind};
+use tokio::io::{Result, ErrorKind};
 use tokio::prelude::*;
 use tokio::sync::Mutex;
 
@@ -71,23 +70,6 @@ impl<T> Progress<T> {
     }
 }
 
-impl<T: AsyncRead + Unpin + Send> AsyncRead for Progress<T> {
-    fn poll_read(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-        buf: &mut [u8]
-    ) -> Poll<Result<usize>> {
-        match self.inner.lock().boxed().as_mut().poll(cx) {
-            Poll::Ready(mut s) => {
-                Pin::new(&mut s.buf).poll_read(cx, buf)
-            },
-            Poll::Pending => {
-                Poll::Pending
-            }
-        }
-    }
-}
-
 impl<T: AsyncWrite + Unpin + Send> AsyncWrite for Progress<T> {
     fn poll_write(
         self: Pin<&mut Self>,
@@ -141,42 +123,10 @@ impl<T: AsyncWrite + Unpin + Send> AsyncWrite for Progress<T> {
     }
 }
 
-impl<T: AsyncSeek + Unpin + Send> AsyncSeek for Progress<T> {
-    fn start_seek(
-        self: Pin<&mut Self>,
-        cx: &mut Context,
-        position: SeekFrom
-    ) -> Poll<Result<()>> {
-        match self.inner.lock().boxed().as_mut().poll(cx) {
-            Poll::Ready(mut s) => {
-                Pin::new(&mut s.buf).start_seek(cx, position)
-            },
-            Poll::Pending => {
-                Poll::Pending
-            }
-        }
-    }
-
-    fn poll_complete(
-        self: Pin<&mut Self>,
-        cx: &mut Context
-    ) -> Poll<Result<u64>> {
-        match self.inner.lock().boxed().as_mut().poll(cx) {
-            Poll::Ready(mut s) => {
-                Pin::new(&mut s.buf).poll_complete(cx)
-            },
-            Poll::Pending => {
-                Poll::Pending
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use tokio::io::AsyncReadExt;
     use std::io::Cursor;
 
     #[tokio::test]
@@ -220,36 +170,11 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn async_read_test() {
-        let mut pg = Progress::new("name", Cursor::new(vec![0, 1, 2]));
-        let mut buf = vec![];
-        let n = pg.read_to_end(&mut buf).await.unwrap();
-        assert_eq!(n , 3);
-        assert_eq!(buf, vec![0, 1, 2]);
-    }
-
-    #[tokio::test]
     async fn async_write_test() {
         let mut pg = Progress::new("name", Cursor::new(vec![]));
         let buf = [0, 1, 2];
         pg.write_all(&buf).await.unwrap();
         assert_eq!(pg.inner.lock().await.buf.get_ref(), &vec![0, 1, 2]);
-    }
-
-    #[tokio::test]
-    async fn async_seek_test() {
-        let mut pg = Progress::new("name", Cursor::new(vec![0, 1, 2]));
-        let mut buf = vec![];
-
-        let n = pg.read_to_end(&mut buf).await.unwrap();
-        assert_eq!(n , 3);
-        assert_eq!(buf, vec![0, 1, 2]);
-
-        pg.seek(SeekFrom::Start(0)).await.unwrap();
-
-        let n = pg.read_to_end(&mut buf).await.unwrap();
-        assert_eq!(n , 3);
-        assert_eq!(buf, vec![0, 1, 2, 0, 1, 2]);
     }
 
     #[tokio::test]
