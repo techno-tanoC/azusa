@@ -36,21 +36,21 @@ impl App {
         debug!("app::download id: {:?} url: {:?} name: {:?} ext: {:?}", id, url.as_ref(), name.as_ref(), ext.as_ref());
 
         let file = File::from_std(tempfile::tempfile()?);
-        let mut pg = Progress::new(name.as_ref(), file);
+        let pg = Progress::new(name.as_ref(), file);
         self.table.add(id.to_string(), pg.clone()).await;
-        let ret = self.do_download(&mut pg, url, name, ext).await;
+        let ret = self.do_download(pg, url, name, ext).await;
         self.table.delete(id.to_string()).await;
         ret
     }
 
-    async fn do_download<T>(&self, pg: &mut Progress<T>, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
+    async fn do_download<T>(&self, pg: Progress<T>, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
     where
         T: AsyncRead + AsyncWrite + AsyncSeek + Unpin + Send,
     {
-        let res = self.client.get(url.as_ref()).send().await?;
-        let ret = Download::new(res, pg.clone()).run().await;
+        let mut res = self.client.get(url.as_ref()).send().await?;
+        let ret = Download::new(&mut res, pg.clone()).run().await;
         if let Ok(()) = ret {
-            self.lock_copy.copy(pg, &name, &ext).await
+            self.lock_copy.copy(&mut pg.clone(), &name, &ext).await
         } else {
             ret
         }
