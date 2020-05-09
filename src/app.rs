@@ -48,9 +48,9 @@ impl App {
         T: AsyncWrite + Unpin + Send,
         P: AsRef<Path>,
     {
-        let res = self.client.get(url.as_ref()).send().await?;
-        let ret = Download::new(res, pg).run().await;
-        if let Ok(()) = ret {
+        let mut res = self.client.get(url.as_ref()).send().await?;
+        let ret = Download::new(&mut res, pg).run().await;
+        if ret.is_ok() {
             self.lock_copy.copy(path, &name, &ext).await
         } else {
             ret
