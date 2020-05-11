@@ -1,25 +1,25 @@
 use reqwest::{Response, header};
 use tokio::prelude::*;
 
-use crate::progress::Progress;
+use crate::progress::ProgressWriter;
 use crate::error::{Error, Result};
 
 pub struct Download<'a, T> {
     res: &'a mut Response,
-    pg: Progress<T>,
+    writer: ProgressWriter<T>,
 }
 
 impl<'a, T: AsyncWrite + Unpin + Send> Download<'a, T> {
-    pub fn new(res: &'a mut Response, pg: Progress<T>) -> Self {
-        Download { res, pg }
+    pub fn new(res: &'a mut Response, writer: ProgressWriter<T>) -> Self {
+        Download { res, writer }
     }
 
     pub async fn run(&mut self) -> Result<()> {
         if self.res.status().is_success() {
             if let Some(cl) = Self::content_length(self.res) {
-                self.pg.set_total(cl).await;
+                self.writer.set_total(cl);
             }
-            Self::copy(&mut self.res, &mut self.pg).await
+            Self::copy(&mut self.res, &mut self.writer).await
         } else {
             Err(Error::NonSuccessStatusError())
         }
@@ -49,36 +49,38 @@ mod tests {
     use super::*;
 
     use std::io::Cursor;
-    use crate::progress::Progress;
+    use crate::progress::{Progress, ProgressWriter};
 
     #[tokio::test]
     async fn run_without_content_length_test() {
-        let pg = Progress::new("name", Cursor::new(vec![]));
+        let pg = Progress::new("name");
+        let writer = ProgressWriter::new(pg.clone(), Cursor::new(vec![]));
         let body: reqwest::Body = vec![0, 1, 2].into();
         let mut res = http::response::Response::new(body).into();
 
-        let item = pg.to_item("id").await;
+        let item = pg.to_item("id");
         assert_eq!((item.size, item.total), (0, 0));
 
-        Download::new(&mut res, pg.clone()).run().await.unwrap();
+        Download::new(&mut res, writer).run().await.unwrap();
 
-        let item = pg.to_item("id").await;
+        let item = pg.to_item("id");
         assert_eq!((item.size, item.total), (3, 0));
     }
 
     #[tokio::test]
     async fn run_with_content_length_test() {
-        let pg = Progress::new("name", Cursor::new(vec![]));
+        let pg = Progress::new("name");
+        let writer = ProgressWriter::new(pg.clone(), Cursor::new(vec![]));
         let body: reqwest::Body = vec![0, 1, 2].into();
         let mut res: reqwest::Response = http::response::Response::new(body).into();
         res.headers_mut().insert(header::CONTENT_LENGTH, "3".parse().unwrap());
 
-        let item = pg.to_item("id").await;
+        let item = pg.to_item("id");
         assert_eq!((item.size, item.total), (0, 0));
 
-        Download::new(&mut res, pg.clone()).run().await.unwrap();
+        Download::new(&mut res, writer).run().await.unwrap();
 
-        let item = pg.to_item("id").await;
+        let item = pg.to_item("id");
         assert_eq!((item.size, item.total), (3, 3));
     }
 

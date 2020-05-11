@@ -21,17 +21,17 @@ impl<V> Table<String, V> {
     }
 }
 
-impl<T> Table<String, Progress<T>> {
+impl Table<String, Arc<Progress>> {
     pub async fn cancel(&self, id: impl AsRef<str>) {
         if let Some(pg) = self.0.lock().await.get_mut(id.as_ref()) {
-            pg.cancel().await;
+            pg.cancel();
         }
     }
 
     pub async fn to_items(&self) -> Vec<Item> {
         let mut vec = vec![];
         for (k, v) in self.0.lock().await.iter() {
-            vec.push(v.to_item(k.clone()).await);
+            vec.push(v.to_item(k.clone()));
         }
         vec
     }
@@ -74,20 +74,20 @@ mod tests {
     #[tokio::test]
     async fn cancel_test() {
         let table = Table::new();
-        let pg = Progress::new("name", ());
+        let pg = Progress::new("name");
         table.add("1", pg.clone()).await;
 
-        assert!(!pg.to_item("1").await.canceled);
+        assert!(!pg.to_item("1").canceled);
         table.cancel("1").await;
-        assert!(pg.to_item("1").await.canceled);
+        assert!(pg.to_item("1").canceled);
     }
 
     #[tokio::test]
     async fn to_items_test() {
         let table = Table::new();
-        let pg1 = Progress::new("name", ());
+        let pg1 = Progress::new("name");
         table.add("1", pg1.clone()).await;
-        let pg2 = Progress::new("name", ());
+        let pg2 = Progress::new("name");
         table.add("2", pg2.clone()).await;
 
         assert_eq!(
