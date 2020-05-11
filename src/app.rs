@@ -1,12 +1,13 @@
 use std::time::Duration;
 use std::path::Path;
+use std::sync::Arc;
 use tokio::fs::File;
 use tokio::prelude::*;
 use uuid::Uuid;
 
 use crate::download::Download;
 use crate::lock_copy::LockCopy;
-use crate::progress::Progress;
+use crate::progress::{Progress, ProgressWriter};
 use crate::table::Table;
 use crate::error::Result;
 
@@ -14,7 +15,7 @@ use crate::error::Result;
 pub struct App {
     pub client: reqwest::Client,
     pub lock_copy: LockCopy,
-    pub table: Table<String, Progress<File>>,
+    pub table: Table<String, Arc<Progress>>,
 }
 
 impl App {
@@ -24,7 +25,7 @@ impl App {
             .danger_accept_invalid_certs(true)
             .build()
             .expect("failed ClientBuilder::build()");
-        let lock_copy =LockCopy::new(&path);
+        let lock_copy = LockCopy::new(&path);
         let table = Table::new();
         App { client, lock_copy, table }
     }
@@ -36,14 +37,15 @@ impl App {
 
         let (file, path) = tempfile::NamedTempFile::new()?.into_parts();
         let file = File::from_std(file);
-        let pg = Progress::new(name.as_ref(), file);
+        let pg = Progress::new(name.as_ref());
         self.table.add(id.to_string(), pg.clone()).await;
-        let ret = self.do_download(pg, url, &path, name, ext).await;
+        let writer = ProgressWriter::new(pg, file);
+        let ret = self.do_download(writer, url, &path, name, ext).await;
         self.table.delete(id.to_string()).await;
         ret
     }
 
-    async fn do_download<T, P>(&self, pg: Progress<T>, url: impl AsRef<str>, path: &P, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
+    async fn do_download<T, P>(&self, pg: ProgressWriter<T>, url: impl AsRef<str>, path: &P, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
     where
         T: AsyncWrite + Unpin + Send,
         P: AsRef<Path>,
