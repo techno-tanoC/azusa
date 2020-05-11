@@ -27,16 +27,16 @@ impl Progress {
     }
 
     pub fn cancel(&self) {
-        self.canceled.store(true, Ordering::Release);
+        self.canceled.store(true, Ordering::SeqCst);
     }
 
     pub fn to_item(&self, id: impl ToString) -> Item {
         Item {
             id: id.to_string(),
             name: self.name.clone(),
-            total: self.total.load(Ordering::Acquire),
-            size: self.size.load(Ordering::Acquire),
-            canceled: self.canceled.load(Ordering::Acquire),
+            total: self.total.load(Ordering::SeqCst),
+            size: self.size.load(Ordering::SeqCst),
+            canceled: self.canceled.load(Ordering::SeqCst),
         }
     }
 }
@@ -55,7 +55,7 @@ impl<T> ProgressWriter<T> {
     }
 
     pub fn set_total(&mut self, total: u64) {
-        self.pg.total.store(total, Ordering::Release);
+        self.pg.total.store(total, Ordering::SeqCst);
     }
 }
 
@@ -65,12 +65,12 @@ impl<T: AsyncWrite + Unpin + Send> AsyncWrite for ProgressWriter<T> {
         cx: &mut Context,
         buf: &[u8]
     ) -> Poll<Result<usize>> {
-        if self.pg.canceled.load(Ordering::Acquire) {
+        if self.pg.canceled.load(Ordering::SeqCst) {
             Poll::Ready(Err(io::Error::new(ErrorKind::Interrupted, "canceled")))
         } else {
             let poll = Pin::new(&mut self.buf).poll_write(cx, buf);
             if let Poll::Ready(Ok(n)) = poll {
-                self.pg.size.fetch_add(n as u64, Ordering::Acquire);
+                self.pg.size.fetch_add(n as u64, Ordering::SeqCst);
             }
             poll
         }
@@ -149,11 +149,11 @@ mod tests {
         let mut writer = ProgressWriter::new(Progress::new("name"), Cursor::new(vec![]));
         let mut buf = vec![0, 1, 2];
 
-        assert_eq!(writer.pg.size.load(Ordering::Acquire), 0);
+        assert_eq!(writer.pg.size.load(Ordering::SeqCst), 0);
         writer.write_all(&mut buf).await.unwrap();
-        assert_eq!(writer.pg.size.load(Ordering::Acquire), 3);
+        assert_eq!(writer.pg.size.load(Ordering::SeqCst), 3);
         writer.write_all(&mut buf).await.unwrap();
-        assert_eq!(writer.pg.size.load(Ordering::Acquire), 6);
+        assert_eq!(writer.pg.size.load(Ordering::SeqCst), 6);
     }
 
     #[tokio::test]
@@ -161,12 +161,12 @@ mod tests {
         let mut writer = ProgressWriter::new(Progress::new("name"), Cursor::new(vec![]));
         let mut buf = vec![0, 1, 2];
 
-        assert_eq!(writer.pg.canceled.load(Ordering::Acquire), false);
+        assert_eq!(writer.pg.canceled.load(Ordering::SeqCst), false);
         assert!(writer.write_all(&mut buf).await.is_ok());
 
         writer.pg.cancel();
 
-        assert_eq!(writer.pg.canceled.load(Ordering::Acquire), true);
+        assert_eq!(writer.pg.canceled.load(Ordering::SeqCst), true);
         assert!(writer.write_all(&mut buf).await.is_err());
     }
 }
