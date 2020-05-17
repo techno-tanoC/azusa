@@ -40,20 +40,20 @@ impl App {
         let file = File::from_std(file);
         let pg = Progress::new(name.as_ref());
         self.table.add(id.to_string(), pg.clone()).await;
-        let mut decorator = ProgressDecorator::new(pg, file);
-        let ret = self.do_download(&mut decorator, url, name, ext).await;
+        let mut deco = ProgressDecorator::new(pg, file);
+        let ret = self.do_download(&mut deco, url, name, ext).await;
         self.table.delete(id.to_string()).await;
         ret
     }
 
-    async fn do_download<T>(&self, pg: &mut ProgressDecorator<T>, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
+    async fn do_download<T>(&self, deco: &mut ProgressDecorator<T>, url: impl AsRef<str>, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
     where
         T: AsyncRead + AsyncWrite + AsyncSeek + Unpin + Send,
     {
         let mut res = self.client.get(url.as_ref()).send().await?;
-        let ret = Download::new(&mut res, pg).run().await;
+        let ret = Download::new(&mut res, deco).run().await;
         if ret.is_ok() {
-            self.lock_copy.copy(pg, &name, &ext).await
+            self.lock_copy.copy(deco, &name, &ext).await
         } else {
             ret
         }

@@ -128,23 +128,23 @@ mod tests {
 
     #[test]
     fn set_total_test() {
-        let mut writer = ProgressDecorator::new(Progress::new("name"), ());
-        assert_eq!(writer.pg.to_item("").total, 0);
-        writer.set_total(1000);
-        assert_eq!(writer.pg.to_item("").total, 1000);
+        let mut deco = ProgressDecorator::new(Progress::new("name"), ());
+        assert_eq!(deco.pg.to_item("").total, 0);
+        deco.set_total(1000);
+        assert_eq!(deco.pg.to_item("").total, 1000);
     }
 
     #[test]
     fn cancel_test() {
-        let writer = ProgressDecorator::new(Progress::new("name"), ());
-        assert_eq!(writer.pg.to_item("").canceled, false);
-        writer.pg.cancel();
-        assert_eq!(writer.pg.to_item("").canceled, true);
+        let deco = ProgressDecorator::new(Progress::new("name"), ());
+        assert_eq!(deco.pg.to_item("").canceled, false);
+        deco.pg.cancel();
+        assert_eq!(deco.pg.to_item("").canceled, true);
     }
 
     #[test]
     fn to_item_test() {
-        let writer = ProgressDecorator {
+        let deco = ProgressDecorator {
             pg: Arc::new(Progress {
                 name: "name".to_string(),
                 total: 1000.into(),
@@ -162,7 +162,7 @@ mod tests {
             canceled: true,
         };
 
-        assert_eq!(writer.pg.to_item("id"), item);
+        assert_eq!(deco.pg.to_item("id"), item);
     }
 
     #[tokio::test]
@@ -176,10 +176,10 @@ mod tests {
 
     #[tokio::test]
     async fn async_write_test() {
-        let mut writer = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![]));
+        let mut deco = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![]));
         let buf = [0, 1, 2];
-        writer.write_all(&buf).await.unwrap();
-        assert_eq!(writer.buf.get_ref(), &vec![0, 1, 2]);
+        deco.write_all(&buf).await.unwrap();
+        assert_eq!(deco.buf.get_ref(), &vec![0, 1, 2]);
     }
 
     #[tokio::test]
@@ -200,27 +200,27 @@ mod tests {
 
     #[tokio::test]
     async fn progress_test() {
-        let mut writer = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![]));
+        let mut deco = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![]));
         let mut buf = vec![0, 1, 2];
 
-        assert_eq!(writer.pg.size.load(Ordering::SeqCst), 0);
-        writer.write_all(&mut buf).await.unwrap();
-        assert_eq!(writer.pg.size.load(Ordering::SeqCst), 3);
-        writer.write_all(&mut buf).await.unwrap();
-        assert_eq!(writer.pg.size.load(Ordering::SeqCst), 6);
+        assert_eq!(deco.pg.size.load(Ordering::SeqCst), 0);
+        deco.write_all(&mut buf).await.unwrap();
+        assert_eq!(deco.pg.size.load(Ordering::SeqCst), 3);
+        deco.write_all(&mut buf).await.unwrap();
+        assert_eq!(deco.pg.size.load(Ordering::SeqCst), 6);
     }
 
     #[tokio::test]
     async fn cancel_write_test() {
-        let mut writer = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![]));
+        let mut deco = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![]));
         let mut buf = vec![0, 1, 2];
 
-        assert_eq!(writer.pg.canceled.load(Ordering::SeqCst), false);
-        assert!(writer.write_all(&mut buf).await.is_ok());
+        assert_eq!(deco.pg.canceled.load(Ordering::SeqCst), false);
+        assert!(deco.write_all(&mut buf).await.is_ok());
 
-        writer.pg.cancel();
+        deco.pg.cancel();
 
-        assert_eq!(writer.pg.canceled.load(Ordering::SeqCst), true);
-        assert!(writer.write_all(&mut buf).await.is_err());
+        assert_eq!(deco.pg.canceled.load(Ordering::SeqCst), true);
+        assert!(deco.write_all(&mut buf).await.is_err());
     }
 }
