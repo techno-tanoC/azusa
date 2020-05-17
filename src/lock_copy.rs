@@ -28,6 +28,7 @@ impl LockCopy {
         let s = self.0.lock().await;
         let fresh = Self::fresh_name(&*s, name, ext);
         let mut dest = File::create(fresh).await?;
+        Self::rewind_copy(from, &mut dest).await?;
         Ok(())
     }
 

@@ -62,7 +62,7 @@ impl<T> ProgressDecorator<T> {
 
 impl<T: AsyncRead + Unpin + Send> AsyncRead for ProgressDecorator<T> {
     fn poll_read(
-        self: Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut Context,
         buf: &mut [u8]
     ) -> Poll<Result<usize>> {
@@ -104,7 +104,7 @@ impl<T: AsyncWrite + Unpin + Send> AsyncWrite for ProgressDecorator<T> {
 
 impl<T: AsyncSeek + Unpin + Send> AsyncSeek for ProgressDecorator<T> {
     fn start_seek(
-        self: Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut Context,
         position: SeekFrom
     ) -> Poll<Result<()>> {
@@ -112,7 +112,7 @@ impl<T: AsyncSeek + Unpin + Send> AsyncSeek for ProgressDecorator<T> {
     }
 
     fn poll_complete(
-        self: Pin<&mut Self>,
+        mut self: Pin<&mut Self>,
         cx: &mut Context
     ) -> Poll<Result<u64>> {
         Pin::new(&mut self.buf).poll_complete(cx)
