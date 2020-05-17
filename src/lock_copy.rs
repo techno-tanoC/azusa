@@ -1,6 +1,10 @@
 use std::borrow::Cow;
+use std::io::SeekFrom;
 use std::path::*;
 use std::sync::Arc;
+use tokio::fs::File;
+use tokio::io::{self, BufReader, BufWriter, AsyncSeek};
+use tokio::prelude::*;
 use tokio::sync::Mutex;
 
 use crate::error::Result;
@@ -13,9 +17,9 @@ impl LockCopy {
         LockCopy(Arc::new(Mutex::new(path.as_ref().to_path_buf())))
     }
 
-    pub async fn copy<P, S, T>(&self, from: &P, name: &S, ext: &T) -> Result<()>
+    pub async fn copy<R, S, T>(&self, from: &mut R, name: &S, ext: &T) -> Result<()>
     where
-        P: AsRef<Path>,
+        R: AsyncRead + AsyncSeek + Unpin + Send,
         S: AsRef<str>,
         T: AsRef<str>,
     {
@@ -23,7 +27,19 @@ impl LockCopy {
 
         let s = self.0.lock().await;
         let fresh = Self::fresh_name(&*s, name, ext);
-        tokio::fs::copy(from, fresh).await?;
+        let mut dest = File::create(fresh).await?;
+        Self::rewind_copy(from, &mut dest).await?;
+        Ok(())
+    }
+
+    async fn rewind_copy<R, W>(reader: &mut R, writer: &mut W) -> Result<()>
+    where
+        R: AsyncRead + AsyncSeek + Unpin + Send,
+        W: AsyncWrite + Unpin + Send,
+    {
+        reader.seek(SeekFrom::Start(0)).await?;
+        let (mut reader, mut writer) = (BufReader::new(reader), BufWriter::new(writer));
+        io::copy(&mut reader, &mut writer).await?;
         Ok(())
     }
 
@@ -70,13 +86,25 @@ impl LockCopy {
 mod tests {
     use super::*;
 
+    use std::io::Cursor;
+
     #[tokio::test]
     async fn copy_test() {
         let dir = tempfile::tempdir().unwrap();
         let lock_copy = LockCopy::new(&dir);
-        let mut from = Path::new("Cargo.lock");
+        let mut from = File::open("Cargo.lock").await.unwrap();
         let (name, ext) = ("test", "lock");
         lock_copy.copy(&mut from, &name, &ext).await.unwrap();
+    }
+
+    #[tokio::test]
+    async fn rewind_copy_test() {
+        let mut from = Cursor::new(vec![]);
+        from.write_all(&[0u8, 1, 2]).await.unwrap();
+        let mut dest = Cursor::new(vec![]);
+        LockCopy::rewind_copy(&mut from, &mut dest).await.unwrap();
+        assert_eq!(from.position(), 3);
+        assert_eq!(dest.into_inner(), vec![0, 1, 2]);
     }
 
     #[test]

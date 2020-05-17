@@ -1,38 +1,38 @@
 use reqwest::{Response, header};
 use tokio::prelude::*;
 
-use crate::progress::ProgressWriter;
+use crate::progress::ProgressDecorator;
 use crate::error::{Error, Result};
 
-pub struct Download<'a, T> {
+pub struct Download<'a, 'b, T> {
     res: &'a mut Response,
-    writer: ProgressWriter<T>,
+    deco: &'b mut ProgressDecorator<T>,
 }
 
-impl<'a, T: AsyncWrite + Unpin + Send> Download<'a, T> {
-    pub fn new(res: &'a mut Response, writer: ProgressWriter<T>) -> Self {
-        Download { res, writer }
+impl<'a, 'b, T: AsyncWrite + Unpin + Send> Download<'a, 'b, T> {
+    pub fn new(res: &'a mut Response, deco: &'b mut ProgressDecorator<T>) -> Self {
+        Download { res, deco }
     }
 
     pub async fn run(&mut self) -> Result<()> {
         if self.res.status().is_success() {
             if let Some(cl) = Self::content_length(self.res) {
-                self.writer.set_total(cl);
+                self.deco.set_total(cl);
             }
-            Self::copy(&mut self.res, &mut self.writer).await
+            Self::copy(&mut self.res, &mut self.deco).await
         } else {
             Err(Error::NonSuccessStatusError())
         }
     }
 }
 
-impl<'a, T> Download<'a, T> {
-    async fn copy<W>(res: &mut Response, writer: &mut W) -> Result<()>
+impl<'a, 'b, T> Download<'a, 'b, T> {
+    async fn copy<W>(res: &mut Response, deco: &mut W) -> Result<()>
     where
         W: AsyncWrite + Unpin + Send
     {
         while let Some(bytes) = res.chunk().await? {
-            writer.write_all(&bytes).await?;
+            deco.write_all(&bytes).await?;
         }
         Ok(())
     }
@@ -49,19 +49,19 @@ mod tests {
     use super::*;
 
     use std::io::Cursor;
-    use crate::progress::{Progress, ProgressWriter};
+    use crate::progress::{Progress, ProgressDecorator};
 
     #[tokio::test]
     async fn run_without_content_length_test() {
         let pg = Progress::new("name");
-        let writer = ProgressWriter::new(pg.clone(), Cursor::new(vec![]));
+        let mut deco = ProgressDecorator::new(pg.clone(), Cursor::new(vec![]));
         let body: reqwest::Body = vec![0, 1, 2].into();
         let mut res = http::response::Response::new(body).into();
 
         let item = pg.to_item("id");
         assert_eq!((item.size, item.total), (0, 0));
 
-        Download::new(&mut res, writer).run().await.unwrap();
+        Download::new(&mut res, &mut deco).run().await.unwrap();
 
         let item = pg.to_item("id");
         assert_eq!((item.size, item.total), (3, 0));
@@ -70,7 +70,7 @@ mod tests {
     #[tokio::test]
     async fn run_with_content_length_test() {
         let pg = Progress::new("name");
-        let writer = ProgressWriter::new(pg.clone(), Cursor::new(vec![]));
+        let mut deco = ProgressDecorator::new(pg.clone(), Cursor::new(vec![]));
         let body: reqwest::Body = vec![0, 1, 2].into();
         let mut res: reqwest::Response = http::response::Response::new(body).into();
         res.headers_mut().insert(header::CONTENT_LENGTH, "3".parse().unwrap());
@@ -78,7 +78,7 @@ mod tests {
         let item = pg.to_item("id");
         assert_eq!((item.size, item.total), (0, 0));
 
-        Download::new(&mut res, writer).run().await.unwrap();
+        Download::new(&mut res, &mut deco).run().await.unwrap();
 
         let item = pg.to_item("id");
         assert_eq!((item.size, item.total), (3, 3));
@@ -89,10 +89,10 @@ mod tests {
         let bytes = vec![0, 1, 2];
         let body: reqwest::Body = bytes.clone().into();
         let mut res = http::response::Response::new(body).into();
-        let mut writer = Cursor::new(vec![]);
-        let flag = Download::<()>::copy(&mut res, &mut writer).await.is_ok();
+        let mut deco = Cursor::new(vec![]);
+        let flag = Download::<()>::copy(&mut res, &mut deco).await.is_ok();
         assert!(flag);
-        assert_eq!(writer.into_inner(), bytes);
+        assert_eq!(deco.into_inner(), bytes);
     }
 
     #[test]
