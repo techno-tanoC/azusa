@@ -42,14 +42,14 @@ impl Progress {
     }
 }
 
-pub struct ProgressWriter<T> {
+pub struct ProgressDecorator<T> {
     pg: Arc<Progress>,
     buf: T,
 }
 
-impl<T> ProgressWriter<T> {
+impl<T> ProgressDecorator<T> {
     pub fn new(pg: Arc<Progress>, buf: T) -> Self {
-        ProgressWriter {
+        ProgressDecorator {
             pg,
             buf,
         }
@@ -60,7 +60,7 @@ impl<T> ProgressWriter<T> {
     }
 }
 
-impl<T: AsyncRead + Unpin + Send> AsyncRead for ProgressWriter<T> {
+impl<T: AsyncRead + Unpin + Send> AsyncRead for ProgressDecorator<T> {
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context,
@@ -70,7 +70,7 @@ impl<T: AsyncRead + Unpin + Send> AsyncRead for ProgressWriter<T> {
     }
 }
 
-impl<T: AsyncWrite + Unpin + Send> AsyncWrite for ProgressWriter<T> {
+impl<T: AsyncWrite + Unpin + Send> AsyncWrite for ProgressDecorator<T> {
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
@@ -102,7 +102,7 @@ impl<T: AsyncWrite + Unpin + Send> AsyncWrite for ProgressWriter<T> {
     }
 }
 
-impl<T: AsyncSeek + Unpin + Send> AsyncSeek for ProgressWriter<T> {
+impl<T: AsyncSeek + Unpin + Send> AsyncSeek for ProgressDecorator<T> {
     fn start_seek(
         self: Pin<&mut Self>,
         cx: &mut Context,
@@ -128,7 +128,7 @@ mod tests {
 
     #[test]
     fn set_total_test() {
-        let mut writer = ProgressWriter::new(Progress::new("name"), ());
+        let mut writer = ProgressDecorator::new(Progress::new("name"), ());
         assert_eq!(writer.pg.to_item("").total, 0);
         writer.set_total(1000);
         assert_eq!(writer.pg.to_item("").total, 1000);
@@ -136,7 +136,7 @@ mod tests {
 
     #[test]
     fn cancel_test() {
-        let writer = ProgressWriter::new(Progress::new("name"), ());
+        let writer = ProgressDecorator::new(Progress::new("name"), ());
         assert_eq!(writer.pg.to_item("").canceled, false);
         writer.pg.cancel();
         assert_eq!(writer.pg.to_item("").canceled, true);
@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn to_item_test() {
-        let writer = ProgressWriter {
+        let writer = ProgressDecorator {
             pg: Arc::new(Progress {
                 name: "name".to_string(),
                 total: 1000.into(),
@@ -167,7 +167,7 @@ mod tests {
 
     #[tokio::test]
     async fn async_read_test() {
-        let mut pg = ProgressWriter::new(Progress::new("name"), Cursor::new(vec![0, 1, 2]));
+        let mut pg = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![0, 1, 2]));
         let mut buf = vec![];
         let n = pg.read_to_end(&mut buf).await.unwrap();
         assert_eq!(n , 3);
@@ -176,7 +176,7 @@ mod tests {
 
     #[tokio::test]
     async fn async_write_test() {
-        let mut writer = ProgressWriter::new(Progress::new("name"), Cursor::new(vec![]));
+        let mut writer = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![]));
         let buf = [0, 1, 2];
         writer.write_all(&buf).await.unwrap();
         assert_eq!(writer.buf.get_ref(), &vec![0, 1, 2]);
@@ -184,7 +184,7 @@ mod tests {
 
     #[tokio::test]
     async fn async_seek_test() {
-        let mut pg = ProgressWriter::new(Progress::new("name"), Cursor::new(vec![0, 1, 2]));
+        let mut pg = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![0, 1, 2]));
         let mut buf = vec![];
 
         let n = pg.read_to_end(&mut buf).await.unwrap();
@@ -200,7 +200,7 @@ mod tests {
 
     #[tokio::test]
     async fn progress_test() {
-        let mut writer = ProgressWriter::new(Progress::new("name"), Cursor::new(vec![]));
+        let mut writer = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![]));
         let mut buf = vec![0, 1, 2];
 
         assert_eq!(writer.pg.size.load(Ordering::SeqCst), 0);
@@ -212,7 +212,7 @@ mod tests {
 
     #[tokio::test]
     async fn cancel_write_test() {
-        let mut writer = ProgressWriter::new(Progress::new("name"), Cursor::new(vec![]));
+        let mut writer = ProgressDecorator::new(Progress::new("name"), Cursor::new(vec![]));
         let mut buf = vec![0, 1, 2];
 
         assert_eq!(writer.pg.canceled.load(Ordering::SeqCst), false);

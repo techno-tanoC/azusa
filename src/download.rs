@@ -1,16 +1,16 @@
 use reqwest::{Response, header};
 use tokio::prelude::*;
 
-use crate::progress::ProgressWriter;
+use crate::progress::ProgressDecorator;
 use crate::error::{Error, Result};
 
 pub struct Download<'a, T> {
     res: &'a mut Response,
-    writer: ProgressWriter<T>,
+    writer: ProgressDecorator<T>,
 }
 
 impl<'a, T: AsyncWrite + Unpin + Send> Download<'a, T> {
-    pub fn new(res: &'a mut Response, writer: ProgressWriter<T>) -> Self {
+    pub fn new(res: &'a mut Response, writer: ProgressDecorator<T>) -> Self {
         Download { res, writer }
     }
 
@@ -49,12 +49,12 @@ mod tests {
     use super::*;
 
     use std::io::Cursor;
-    use crate::progress::{Progress, ProgressWriter};
+    use crate::progress::{Progress, ProgressDecorator};
 
     #[tokio::test]
     async fn run_without_content_length_test() {
         let pg = Progress::new("name");
-        let writer = ProgressWriter::new(pg.clone(), Cursor::new(vec![]));
+        let writer = ProgressDecorator::new(pg.clone(), Cursor::new(vec![]));
         let body: reqwest::Body = vec![0, 1, 2].into();
         let mut res = http::response::Response::new(body).into();
 
@@ -70,7 +70,7 @@ mod tests {
     #[tokio::test]
     async fn run_with_content_length_test() {
         let pg = Progress::new("name");
-        let writer = ProgressWriter::new(pg.clone(), Cursor::new(vec![]));
+        let writer = ProgressDecorator::new(pg.clone(), Cursor::new(vec![]));
         let body: reqwest::Body = vec![0, 1, 2].into();
         let mut res: reqwest::Response = http::response::Response::new(body).into();
         res.headers_mut().insert(header::CONTENT_LENGTH, "3".parse().unwrap());

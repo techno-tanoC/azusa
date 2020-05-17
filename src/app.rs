@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::download::Download;
 use crate::lock_copy::LockCopy;
-use crate::progress::{Progress, ProgressWriter};
+use crate::progress::{Progress, ProgressDecorator};
 use crate::table::Table;
 use crate::error::Result;
 
@@ -39,13 +39,13 @@ impl App {
         let file = File::from_std(file);
         let pg = Progress::new(name.as_ref());
         self.table.add(id.to_string(), pg.clone()).await;
-        let writer = ProgressWriter::new(pg, file);
+        let writer = ProgressDecorator::new(pg, file);
         let ret = self.do_download(writer, url, &path, name, ext).await;
         self.table.delete(id.to_string()).await;
         ret
     }
 
-    async fn do_download<T, P>(&self, pg: ProgressWriter<T>, url: impl AsRef<str>, path: &P, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
+    async fn do_download<T, P>(&self, pg: ProgressDecorator<T>, url: impl AsRef<str>, path: &P, name: impl AsRef<str>, ext: impl AsRef<str>) -> Result<()>
     where
         T: AsyncWrite + Unpin + Send,
         P: AsRef<Path>,
