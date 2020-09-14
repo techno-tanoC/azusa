@@ -11,7 +11,7 @@ futures = "0.3.5"
 tokio = { version = "0.2.22", features = ["full"] }
 tokio-util = { version = "0.3.1", features = ["compat"] }
 reqwest = { version = "0.10.8", features = ["stream", "native-tls-vendored"] }
-serde = { version = "1.0.115", features = ["derive"] }
+serde = { version = "1.0.116", features = ["derive"] }
 serde_json = "1.0.57"
 indexmap = "1.5.2"
 uuid = { version = "0.8.1", features = ["v4"]}
