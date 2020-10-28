@@ -4,7 +4,7 @@ use std::pin::Pin;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::task::{Poll, Context};
-use tokio::io::{AsyncSeek, Result, ErrorKind};
+use tokio::io::{AsyncSeek, Result, ErrorKind, ReadBuf};
 use tokio::prelude::*;
 
 use crate::item::Item;
@@ -64,8 +64,8 @@ impl<T: AsyncRead + Unpin + Send> AsyncRead for ProgressDecorator<T> {
     fn poll_read(
         mut self: Pin<&mut Self>,
         cx: &mut Context,
-        buf: &mut [u8]
-    ) -> Poll<Result<usize>> {
+        buf: &mut ReadBuf
+    ) -> Poll<Result<()>> {
         Pin::new(&mut self.buf).poll_read(cx, buf)
     }
 }
@@ -105,10 +105,9 @@ impl<T: AsyncWrite + Unpin + Send> AsyncWrite for ProgressDecorator<T> {
 impl<T: AsyncSeek + Unpin + Send> AsyncSeek for ProgressDecorator<T> {
     fn start_seek(
         mut self: Pin<&mut Self>,
-        cx: &mut Context,
         position: SeekFrom
-    ) -> Poll<Result<()>> {
-        Pin::new(&mut self.buf).start_seek(cx, position)
+    ) -> Result<()> {
+        Pin::new(&mut self.buf).start_seek(position)
     }
 
     fn poll_complete(
