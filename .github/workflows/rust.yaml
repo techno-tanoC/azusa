@@ -6,7 +6,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: rust:1.42.0-slim-buster
+    container: rust:1.47.0-slim-buster
     steps:
     - uses: actions/checkout@v2
     - name: Cache cargo registry
