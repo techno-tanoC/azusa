@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 futures = "0.3.6"
-tokio = { version = "0.2.22", features = ["full"] }
+tokio = { version = "0.3.2", features = ["full"] }
 tokio-util = { version = "0.3.1", features = ["compat"] }
 reqwest = { version = "0.10.8", features = ["stream", "native-tls-vendored"] }
 serde = { version = "1.0.117", features = ["derive"] }
