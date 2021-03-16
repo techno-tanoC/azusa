@@ -9,7 +9,7 @@
   "license": "MIT",
   "dependencies": {
     "babel-plugin-transform-react-jsx": "^6.24.1",
-    "parcel-bundler": "^1.12.4",
+    "parcel-bundler": "^1.12.5",
     "postcss-modules": "^3.2.2",
     "react": "^16.14.0",
     "react-dom": "^16.13.1"
