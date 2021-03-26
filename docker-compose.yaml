@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  nginx:
+    build:
+      context: ./
+      dockerfile: docker/nginx/Dockerfile
+      args:
+        app_conf: docker/nginx/dev.conf
+    ports:
+      - '8080:80'
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    volumes:
+      - ./docker/nginx/dev.conf:/etc/nginx/conf.d/app.conf
