@@ -1,1 +1,6 @@
+# server
 /server/target/
+
+# client
+/client/node_modules/
+/client/.next/
