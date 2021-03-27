@@ -1,0 +1,47 @@
+.card {
+  display: flex;
+  margin-bottom: 10px;
+  box-shadow:2px 2px 4px 0px #ccc;
+
+  font-size: 0.8em;
+  overflow: hidden;
+
+  .body {
+    display: flex;
+    flex-grow: 1;
+    position: relative;
+
+    .progress {
+      position: absolute;
+      z-index: -1;
+      height: 100%;
+      background-color: #eee;
+    }
+
+    .name {
+      padding: 10px;
+      flex-grow: 1;
+
+      align-self: center;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .counts {
+      padding: 10px;
+
+      text-align: end;
+      white-space: nowrap;
+    }
+  }
+
+  .button {
+    padding: 10px;
+    border-style: none;
+    background-color: #248;
+    color: #fff;
+  }
+}
+
+
