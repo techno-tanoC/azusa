@@ -979,9 +979,11 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "indexmap",
  "rocket",
  "rocket_contrib",
  "serde",
+ "tempfile",
  "tokio",
 ]
 

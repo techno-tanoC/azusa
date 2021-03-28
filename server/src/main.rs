@@ -1,5 +1,7 @@
 #[macro_use] extern crate rocket;
 
+mod downloader;
+
 use anyhow::Result;
 use rocket_contrib::json::{Json, JsonValue, json};
 use serde::Deserialize;
