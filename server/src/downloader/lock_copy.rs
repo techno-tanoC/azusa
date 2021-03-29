@@ -1,5 +1,4 @@
 use anyhow::Result;
-use std::borrow::Cow;
 use std::io::SeekFrom;
 use std::path::*;
 use std::sync::Arc;
@@ -15,13 +14,11 @@ impl LockCopy {
         LockCopy(Arc::new(Mutex::new(path.as_ref().to_path_buf())))
     }
 
-    pub async fn copy<R, S, T>(&self, from: &mut R, name: &S, ext: &T) -> Result<()>
+    pub async fn copy<R>(&self, from: &mut R, name: &str, ext: &str) -> Result<()>
     where
         R: AsyncRead + AsyncSeek + Unpin + Send,
-        S: AsRef<str>,
-        T: AsRef<str>,
     {
-        debug!("lock_copy::copy name: {:?} ext: {:?}", name.as_ref(), ext.as_ref());
+        debug!("lock_copy::copy name: {:?} ext: {:?}", name, ext);
 
         let s = self.0.lock().await;
         let fresh = Self::fresh_name(&*s, name, ext);
@@ -41,11 +38,9 @@ impl LockCopy {
         Ok(())
     }
 
-    fn fresh_name<P, S, T>(path: &P, name: &S, ext: &T) -> PathBuf
+    fn fresh_name<P>(path: &P, name: &str, ext: &str) -> PathBuf
     where
         P: AsRef<Path>,
-        S: AsRef<str>,
-        T: AsRef<str>,
     {
         let mut i = 0;
         loop {
@@ -59,24 +54,20 @@ impl LockCopy {
         }
     }
 
-    fn build_name<S, T>(name: &S, count: u64, ext: &T) -> String
-    where
-        S: AsRef<str>,
-        T: AsRef<str>,
-    {
-        let count: Cow<'_, _> = if count >= 1 {
-            format!("({})", count).into()
+    fn build_name(name: &str, count: u64, ext: &str) -> String {
+        let count = if count >= 1 {
+            format!("({})", count)
         } else {
-            "".into()
+            "".to_string()
         };
 
-        let ext: Cow<'_, _> = if ext.as_ref().is_empty() {
-            "".into()
+        let ext = if ext.is_empty() {
+            "".to_string()
         } else {
-            format!(".{}", ext.as_ref()).into()
+            format!(".{}", ext)
         };
 
-        name.as_ref().to_string() + &count + &ext
+        name.to_string() + &count + &ext
     }
 }
 
