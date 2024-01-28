@@ -3,16 +3,16 @@ use std::time::Duration;
 use anyhow::Result;
 use reqwest::{Client, Response};
 
-pub trait DataSource {
+pub trait DataClient {
     async fn get(&self, url: &str) -> Result<Response>;
 }
 
 #[derive(Debug, Clone)]
-pub struct HttpSource {
+pub struct HttpClient {
     client: Client,
 }
 
-impl HttpSource {
+impl HttpClient {
     pub fn new() -> Result<Self> {
         let client = Client::builder()
             .connect_timeout(Duration::from_secs(10))
@@ -21,7 +21,7 @@ impl HttpSource {
     }
 }
 
-impl DataSource for HttpSource {
+impl DataClient for HttpClient {
     async fn get(&self, url: &str) -> Result<Response> {
         let response = self.client.get(url).send().await?;
         Ok(response)
@@ -34,18 +34,18 @@ pub mod test {
 
     use super::*;
 
-    pub struct TestSource<T> {
+    pub struct TestClient<T> {
         status: u16,
         body: T,
     }
 
-    impl<T> TestSource<T> {
+    impl<T> TestClient<T> {
         pub fn new(status: u16, body: T) -> Result<Self> {
             Ok(Self { status, body })
         }
     }
 
-    impl<T> DataSource for TestSource<T>
+    impl<T> DataClient for TestClient<T>
     where
         T: Into<Body> + Clone,
     {
@@ -61,7 +61,7 @@ pub mod test {
     #[tokio::test]
     async fn test_client() {
         let body = "hello world".to_string();
-        let client = TestSource::new(200, body.clone()).unwrap();
+        let client = TestClient::new(200, body.clone()).unwrap();
         let response = client.get("http://dummy.com/").await.unwrap();
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!(response.content_length(), Some(11));
