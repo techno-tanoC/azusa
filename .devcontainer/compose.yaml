@@ -1,0 +1,15 @@
+services:
+  app:
+    build:
+      context: ../
+      dockerfile: .devcontainer/Dockerfile
+    command: sleep infinity
+    init: true
+    volumes:
+      - ../:/workspace
+      - cargo:/usr/local/cargo
+      - target:/workspace/target
+
+volumes:
+  cargo:
+  target:
