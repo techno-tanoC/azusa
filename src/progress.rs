@@ -41,17 +41,24 @@ mod test {
         let pg = Progress::new(&name);
 
         assert_eq!(pg.name, name);
-        assert_eq!(pg.total.load(Ordering::SeqCst), 0);
-        assert_eq!(pg.size.load(Ordering::SeqCst), 0);
-        assert!(!pg.canceled.load(Ordering::SeqCst));
+        assert_eq!(pg.total.load(Ordering::Relaxed), 0);
+        assert_eq!(pg.size.load(Ordering::Relaxed), 0);
+        assert!(!pg.canceled.load(Ordering::Relaxed));
 
         pg.set_total(1000);
         pg.progress(100);
         pg.cancel();
 
         assert_eq!(pg.name, name);
-        assert_eq!(pg.total.load(Ordering::SeqCst), 1000);
-        assert_eq!(pg.size.load(Ordering::SeqCst), 100);
-        assert!(pg.canceled.load(Ordering::SeqCst));
+        assert_eq!(pg.total.load(Ordering::Relaxed), 1000);
+        assert_eq!(pg.size.load(Ordering::Relaxed), 100);
+        assert!(pg.canceled.load(Ordering::Relaxed));
+
+        pg.progress(300);
+
+        assert_eq!(pg.name, name);
+        assert_eq!(pg.total.load(Ordering::Relaxed), 1000);
+        assert_eq!(pg.size.load(Ordering::Relaxed), 400);
+        assert!(pg.canceled.load(Ordering::Relaxed));
     }
 }
