@@ -4,6 +4,7 @@ use anyhow::Result;
 use reqwest::{Client, Response};
 
 pub trait DataClient {
+    #[allow(async_fn_in_trait)]
     async fn get(&self, url: &str) -> Result<Response>;
 }
 
