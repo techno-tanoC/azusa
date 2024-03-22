@@ -1,5 +1,3 @@
-use std::sync::atomic::Ordering;
-
 use serde::Serialize;
 use uuid::fmt::Hyphenated;
 
@@ -18,10 +16,10 @@ impl Item {
     pub fn from_progress(id: Hyphenated, pg: &Progress) -> Self {
         Self {
             id: id.to_string(),
-            name: pg.name.clone(),
-            total: pg.total.load(Ordering::Relaxed),
-            size: pg.size.load(Ordering::Relaxed),
-            canceled: pg.canceled.load(Ordering::Relaxed),
+            name: pg.name().to_string(),
+            total: pg.total(),
+            size: pg.size(),
+            canceled: pg.is_canceled(),
         }
     }
 }

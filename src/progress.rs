@@ -2,10 +2,10 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 #[derive(Debug)]
 pub struct Progress {
-    pub name: String,
-    pub total: AtomicU64,
-    pub size: AtomicU64,
-    pub canceled: AtomicBool,
+    name: String,
+    total: AtomicU64,
+    size: AtomicU64,
+    canceled: AtomicBool,
 }
 
 impl Progress {
@@ -16,6 +16,22 @@ impl Progress {
             size: AtomicU64::new(0),
             canceled: AtomicBool::new(false),
         }
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn total(&self) -> u64 {
+        self.total.load(Ordering::Relaxed)
+    }
+
+    pub fn size(&self) -> u64 {
+        self.size.load(Ordering::Relaxed)
+    }
+
+    pub fn is_canceled(&self) -> bool {
+        self.canceled.load(Ordering::Relaxed)
     }
 
     pub fn set_total(&self, total: u64) {
@@ -37,28 +53,28 @@ mod test {
 
     #[test]
     fn test_progress() {
-        let name = "example".to_string();
-        let pg = Progress::new(&name);
+        let name = "example";
+        let pg = Progress::new(name);
 
-        assert_eq!(pg.name, name);
-        assert_eq!(pg.total.load(Ordering::Relaxed), 0);
-        assert_eq!(pg.size.load(Ordering::Relaxed), 0);
-        assert!(!pg.canceled.load(Ordering::Relaxed));
+        assert_eq!(pg.name(), name);
+        assert_eq!(pg.total(), 0);
+        assert_eq!(pg.size(), 0);
+        assert!(!pg.is_canceled());
 
         pg.set_total(1000);
         pg.progress(100);
         pg.cancel();
 
-        assert_eq!(pg.name, name);
-        assert_eq!(pg.total.load(Ordering::Relaxed), 1000);
-        assert_eq!(pg.size.load(Ordering::Relaxed), 100);
-        assert!(pg.canceled.load(Ordering::Relaxed));
+        assert_eq!(pg.name(), name);
+        assert_eq!(pg.total(), 1000);
+        assert_eq!(pg.size(), 100);
+        assert!(pg.is_canceled());
 
         pg.progress(300);
 
-        assert_eq!(pg.name, name);
-        assert_eq!(pg.total.load(Ordering::Relaxed), 1000);
-        assert_eq!(pg.size.load(Ordering::Relaxed), 400);
-        assert!(pg.canceled.load(Ordering::Relaxed));
+        assert_eq!(pg.name(), name);
+        assert_eq!(pg.total(), 1000);
+        assert_eq!(pg.size(), 400);
+        assert!(pg.is_canceled());
     }
 }

@@ -4,16 +4,17 @@ use indexmap::IndexMap;
 use tokio::sync::Mutex;
 use uuid::fmt::Hyphenated;
 
-use crate::{progress::Progress, Item};
+use crate::{item::Item, progress::Progress};
 
 pub struct Table(Arc<Mutex<IndexMap<Hyphenated, Arc<Progress>>>>);
 
 impl Table {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         Self(Arc::new(Mutex::new(IndexMap::new())))
     }
 
-    pub async fn to_vec(&self) -> Vec<Item> {
+    pub async fn to_items(&self) -> Vec<Item> {
         self.0
             .lock()
             .await
@@ -41,14 +42,14 @@ mod test {
     async fn test_table() {
         let table = Table::new();
 
-        let items = table.to_vec().await;
+        let items = table.to_items().await;
         assert_eq!(items, vec![]);
 
         let title = "test";
         let pg = Arc::new(Progress::new(title));
         let id = table.add(pg.clone()).await;
 
-        let items = table.to_vec().await;
+        let items = table.to_items().await;
         assert_eq!(
             items,
             vec![Item {
@@ -64,7 +65,7 @@ mod test {
         pg.progress(100);
         pg.cancel();
 
-        let items = table.to_vec().await;
+        let items = table.to_items().await;
         assert_eq!(
             items,
             vec![Item {
@@ -78,7 +79,7 @@ mod test {
 
         table.delete(id).await;
 
-        let items = table.to_vec().await;
+        let items = table.to_items().await;
         assert_eq!(items, vec![]);
     }
 }
