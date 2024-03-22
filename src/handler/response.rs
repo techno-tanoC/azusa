@@ -21,14 +21,6 @@ impl<T> JsonData<T> {
             message: "".to_string(),
         })
     }
-
-    pub fn created(data: T) -> Result<Self> {
-        Ok(Self {
-            status: StatusCode::CREATED,
-            data,
-            message: "".to_string(),
-        })
-    }
 }
 
 impl JsonData<serde_json::Value> {
