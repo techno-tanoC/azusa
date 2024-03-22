@@ -1,4 +1,9 @@
+use std::sync::atomic::Ordering;
+
 use serde::Serialize;
+use uuid::fmt::Hyphenated;
+
+use crate::progress::Progress;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Item {
@@ -7,4 +12,16 @@ pub struct Item {
     pub total: u64,
     pub size: u64,
     pub canceled: bool,
+}
+
+impl Item {
+    pub fn from_progress(id: Hyphenated, pg: &Progress) -> Self {
+        Self {
+            id: id.to_string(),
+            name: pg.name.clone(),
+            total: pg.total.load(Ordering::Relaxed),
+            size: pg.size.load(Ordering::Relaxed),
+            canceled: pg.canceled.load(Ordering::Relaxed),
+        }
+    }
 }

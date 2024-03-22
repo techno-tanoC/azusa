@@ -1,4 +1,4 @@
-use std::sync::{atomic::Ordering, Arc};
+use std::sync::Arc;
 
 use indexmap::IndexMap;
 use tokio::sync::Mutex;
@@ -18,13 +18,7 @@ impl Table {
             .lock()
             .await
             .iter()
-            .map(|(id, pg)| Item {
-                id: id.to_string(),
-                name: pg.name.clone(),
-                total: pg.total.load(Ordering::Relaxed),
-                size: pg.size.load(Ordering::Relaxed),
-                canceled: pg.canceled.load(Ordering::Relaxed),
-            })
+            .map(|(id, pg)| Item::from_progress(*id, pg))
             .collect()
     }
 
