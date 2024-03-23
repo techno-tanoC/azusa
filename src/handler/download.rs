@@ -24,10 +24,13 @@ pub async fn start(
     state: State<AppState>,
     params: Json<StartParams>,
 ) -> Result<JsonData<serde_json::Value>> {
-    state
-        .engine
-        .start(&params.url, &params.name, &params.ext)
-        .await?;
+    tokio::spawn(async move {
+        let res = state
+            .engine
+            .start(&params.url, &params.name, &params.ext)
+            .await;
+        println!("{res:?}");
+    });
     JsonData::empty()
 }
 

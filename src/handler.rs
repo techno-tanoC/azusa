@@ -2,7 +2,7 @@ mod download;
 mod request;
 mod response;
 
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use anyhow::Result;
 use axum::{routing::get, Router};
@@ -21,8 +21,8 @@ pub struct Api;
 
 impl Api {
     #[rustfmt::skip]
-    pub fn build() -> Result<Router> {
-        let engine = Engine::build()?;
+    pub fn build(path: impl AsRef<Path>) -> Result<Router> {
+        let engine = Engine::build(path)?;
         let state = Arc::new(State { engine });
 
         let router = Router::new()
