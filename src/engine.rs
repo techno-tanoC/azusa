@@ -33,6 +33,12 @@ impl Engine {
                 .await??;
         let mut response = self.client.get(url).send().await?;
 
+        if !response.status().is_success() {
+            Err(anyhow::anyhow!(
+                "Response status is not success: {name} {ext} {url}"
+            ))?;
+        }
+
         while let Some(mut chunk) = response.chunk().await? {
             temp.write_all_buf(&mut chunk).await?;
         }
