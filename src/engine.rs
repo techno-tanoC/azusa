@@ -1,11 +1,19 @@
+use std::time::Duration;
+
 use anyhow::Result;
+use reqwest::Client;
 use uuid::fmt::Hyphenated;
 
-pub struct Engine;
+pub struct Engine {
+    client: Client,
+}
 
 impl Engine {
-    pub fn build() -> Self {
-        Engine
+    pub fn build() -> Result<Self> {
+        let client = Client::builder()
+            .connect_timeout(Duration::from_secs(10))
+            .build()?;
+        Ok(Self { client })
     }
 
     pub async fn index(&self) -> Vec<()> {
@@ -13,6 +21,7 @@ impl Engine {
     }
 
     pub async fn start(&self, url: &str, name: &str, ext: &str) -> Result<()> {
+        let response = self.client.get(url).send().await?;
         Ok(())
     }
 

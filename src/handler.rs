@@ -4,6 +4,7 @@ mod response;
 
 use std::sync::Arc;
 
+use anyhow::Result;
 use axum::{routing::get, Router};
 
 use crate::Engine;
@@ -20,14 +21,15 @@ pub struct Api;
 
 impl Api {
     #[rustfmt::skip]
-    pub fn build() -> Router {
-        let engine = Engine::build();
+    pub fn build() -> Result<Router> {
+        let engine = Engine::build()?;
         let state = Arc::new(State { engine });
 
-        Router::new()
+        let router = Router::new()
             .route("/download", get(download::index).post(download::start).delete(download::cancel))
             .fallback(not_found)
-            .with_state(state)
+            .with_state(state);
+        Ok(router)
     }
 }
 
