@@ -2,9 +2,24 @@
 name = "azusa"
 version = "0.1.0"
 edition = "2021"
+default-run = "api"
+
+[lib]
+doctest = false
+
+[[bin]]
+name = "azusa"
+test = false
+
+[[bin]]
+name = "api"
+test = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 anyhow = "1"
+reqwest = { version = "0.12", features = ["rustls-tls-webpki-roots"], default-features = false }
+tempfile = "3"
 tokio = { version = "1", features = ["full"] }
+uuid = { version = "1", features = ["v7"] }
