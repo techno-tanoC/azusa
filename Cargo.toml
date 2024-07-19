@@ -19,7 +19,10 @@ test = false
 
 [dependencies]
 anyhow = "1"
+axum = { version = "0.7", features = ["macros"] }
 reqwest = { version = "0.12", features = ["rustls-tls-webpki-roots"], default-features = false }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
-uuid = { version = "1", features = ["v7"] }
+uuid = { version = "1", features = ["v7", "serde"] }

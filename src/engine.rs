@@ -1,5 +1,5 @@
 mod downloader;
-mod item;
+pub mod item;
 mod progress;
 mod progress_map;
 
