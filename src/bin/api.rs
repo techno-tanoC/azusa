@@ -31,7 +31,8 @@ async fn main() -> Result<()> {
 type AppState = Arc<azusa::Engine>;
 
 fn new_app_state() -> AppState {
-    let engine = azusa::Engine::default();
+    let client = reqwest::Client::new();
+    let engine = azusa::Engine::new(client, "./volume".into());
     Arc::new(engine)
 }
 
@@ -53,7 +54,9 @@ async fn index(engine: State<AppState>) -> Json<Vec<azusa::Item>> {
 
 async fn start(engine: State<AppState>, axum::Json(params): Json<Params>) {
     tokio::spawn(async move {
-        engine.download(params.url, params.title, params.ext).await;
+        if let Err(e) = engine.download(params.url, params.title, params.ext).await {
+            println!("{:?}", e);
+        }
     });
 }
 

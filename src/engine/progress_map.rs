@@ -5,8 +5,10 @@ use uuid::Uuid;
 
 use super::{item::Item, progress::Progress};
 
+type RawMap = Arc<Mutex<BTreeMap<Uuid, Arc<Progress>>>>;
+
 #[derive(Debug, Clone)]
-pub struct ProgressMap(Arc<Mutex<BTreeMap<Uuid, Arc<Progress>>>>);
+pub struct ProgressMap(RawMap);
 
 impl Default for ProgressMap {
     fn default() -> Self {
@@ -16,9 +18,13 @@ impl Default for ProgressMap {
 }
 
 impl ProgressMap {
-    pub async fn add(&self, id: Uuid, progress: Arc<Progress>) {
+    pub async fn add(&self, id: Uuid, progress: Arc<Progress>) -> EntryGuard {
         let mut map = self.0.lock().await;
         map.insert(id, progress);
+        EntryGuard {
+            map: self.0.clone(),
+            id,
+        }
     }
 
     pub async fn remove(&self, id: Uuid) {
@@ -30,8 +36,6 @@ impl ProgressMap {
         let map = self.0.lock().await;
         if let Some(progress) = map.get(&id) {
             progress.cancel();
-        } else {
-            println!("progress not found on cancel: {}", id.as_hyphenated());
         }
     }
 
@@ -43,5 +47,21 @@ impl ProgressMap {
             items.push(item);
         }
         items
+    }
+}
+
+pub struct EntryGuard {
+    map: RawMap,
+    id: Uuid,
+}
+
+impl Drop for EntryGuard {
+    fn drop(&mut self) {
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async {
+                let mut map = self.map.lock().await;
+                map.remove(&self.id)
+            });
+        });
     }
 }
