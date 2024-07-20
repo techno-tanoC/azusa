@@ -1,5 +1,9 @@
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
+use uuid::Uuid;
+
+use crate::Item;
+
 #[derive(Debug)]
 pub struct Progress {
     url: String,
@@ -62,5 +66,17 @@ impl Progress {
 
     pub fn cancel(&self) {
         self.is_canceled.store(true, Ordering::Relaxed);
+    }
+
+    pub fn to_item(&self, id: Uuid) -> Item {
+        Item {
+            id: id.hyphenated(),
+            url: self.url().to_string(),
+            title: self.title().to_string(),
+            ext: self.ext().to_string(),
+            total: self.total(),
+            current: self.current(),
+            is_canceled: self.is_canceled(),
+        }
     }
 }

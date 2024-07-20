@@ -39,15 +39,7 @@ impl ProgressMap {
         let map = self.0.lock().await;
         let mut items = vec![];
         for (key, pg) in map.iter() {
-            let item = Item {
-                id: key.hyphenated(),
-                url: pg.url().to_string(),
-                title: pg.title().to_string(),
-                ext: pg.ext().to_string(),
-                total: pg.total(),
-                current: pg.current(),
-                is_canceled: pg.is_canceled(),
-            };
+            let item = pg.to_item(*key);
             items.push(item);
         }
         items
