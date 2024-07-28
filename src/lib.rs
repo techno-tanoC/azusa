@@ -38,7 +38,7 @@ impl Engine {
         title: impl Into<String>,
         ext: impl Into<String>,
         threshold: Option<u64>,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let url = url.into();
         let title = title.into();
         let ext = ext.into();
@@ -63,6 +63,9 @@ impl Engine {
 
         // Download
         while let Some(chunk) = response.chunk().await? {
+            if pg.is_canceled() {
+                return Ok(false);
+            }
             temp.write_all(&chunk).await?;
             pg.progress(chunk.len() as u64);
         }
@@ -78,7 +81,7 @@ impl Engine {
         // Persist
         self.persist.persist(&title, &ext, &mut temp).await?;
 
-        Ok(())
+        Ok(true)
     }
 
     pub async fn index(&self) -> Vec<Item> {
