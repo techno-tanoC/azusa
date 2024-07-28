@@ -1,5 +1,7 @@
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
+use uuid::Uuid;
+
 use crate::item::Item;
 
 #[derive(Debug)]
@@ -48,8 +50,9 @@ impl Progress {
         self.is_canceled.store(true, Ordering::Relaxed);
     }
 
-    pub fn to_item(&self) -> Item {
+    pub fn to_item(&self, id: Uuid) -> Item {
         Item {
+            id: id.hyphenated(),
             url: self.url.to_string(),
             title: self.title.to_string(),
             ext: self.ext.to_string(),

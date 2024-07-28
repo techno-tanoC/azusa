@@ -1,7 +1,9 @@
 use serde::Serialize;
+use uuid::fmt::Hyphenated;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Item {
+    pub id: Hyphenated,
     pub url: String,
     pub title: String,
     pub ext: String,

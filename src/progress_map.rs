@@ -34,7 +34,7 @@ impl ProgressMap {
 
     pub async fn to_items(&self) -> Vec<Item> {
         let map = self.map.lock().await;
-        map.values().map(|pg| pg.to_item()).collect()
+        map.iter().map(|(id, pg)| pg.to_item(*id)).collect()
     }
 }
 
