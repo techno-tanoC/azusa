@@ -16,5 +16,6 @@ test = false
 anyhow = "1"
 async-tempfile = "0.6"
 reqwest = { version = "0.12", features = ["rustls-tls-webpki-roots"], default-features = false }
+serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 uuid = { version = "1", features = ["v7"] }
