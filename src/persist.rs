@@ -21,23 +21,20 @@ impl Persist {
     }
 
     async fn fresh_file(&self, name: &str, ext: &str) -> Result<File> {
-        let mut count = 0;
+        const MAX_ATTEMPTS: usize = 10;
 
-        loop {
-            if count >= 10 {
-                return Err(anyhow::Error::msg("too many retry"));
-            }
-            let fresh_name = if count == 0 {
+        for i in 0..MAX_ATTEMPTS {
+            let fresh_name = if i == 0 {
                 format!("{name}.{ext}")
             } else {
-                format!("{name}({count}).{ext}")
+                format!("{name}({i}).{ext}")
             };
-            count += 1;
-
             let path = self.dest.join(fresh_name);
             if let Ok(file) = File::create_new(path).await {
                 return Ok(file);
             }
         }
+
+        anyhow::bail!("too many retry")
     }
 }
