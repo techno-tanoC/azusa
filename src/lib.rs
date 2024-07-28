@@ -37,6 +37,7 @@ impl Engine {
         url: impl Into<String>,
         title: impl Into<String>,
         ext: impl Into<String>,
+        threshold: Option<u64>,
     ) -> Result<()> {
         let url = url.into();
         let title = title.into();
@@ -64,6 +65,14 @@ impl Engine {
         while let Some(chunk) = response.chunk().await? {
             temp.write_all(&chunk).await?;
             pg.progress(chunk.len() as u64);
+        }
+
+        // Check file size
+        let len = temp.metadata().await?.len();
+        if let Some(size) = threshold {
+            if size > len {
+                anyhow::bail!("{} < {}", len, size);
+            }
         }
 
         // Persist
