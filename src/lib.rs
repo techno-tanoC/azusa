@@ -1,7 +1,7 @@
 use std::{path::PathBuf, sync::Arc};
 
 use anyhow::Result;
-use item::Item;
+pub use item::Item;
 use persist::Persist;
 use progress::Progress;
 use progress_map::ProgressMap;

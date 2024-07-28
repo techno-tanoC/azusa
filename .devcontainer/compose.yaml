@@ -4,6 +4,8 @@ services:
       context: ../
       dockerfile: .devcontainer/Dockerfile
     command: sleep infinity
+    environment:
+      VOLUME: ./volume
     init: true
     volumes:
       - ../:/workspace:delegated
