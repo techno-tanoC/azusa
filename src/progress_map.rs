@@ -33,3 +33,63 @@ impl ProgressMap {
         map.iter().map(|(id, pg)| pg.to_item(*id)).collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::Progress;
+    use super::*;
+
+    const URL: &str = "url";
+    const TITLE: &str = "title";
+    const EXT: &str = "jpg";
+
+    #[tokio::test]
+    async fn test_insert_and_remove() {
+        let id = Uuid::now_v7();
+        let pg = Arc::new(Progress::new(URL, TITLE, EXT));
+        let map = ProgressMap::default();
+
+        assert_eq!(map.to_items().await, vec![]);
+
+        map.insert(id, pg).await;
+        assert_eq!(
+            map.to_items().await,
+            vec![Item {
+                id: id.hyphenated(),
+                url: URL.to_string(),
+                title: TITLE.to_string(),
+                ext: EXT.to_string(),
+                total: 0,
+                size: 0,
+                is_canceled: false,
+            }]
+        );
+
+        map.remove(id).await;
+        assert_eq!(map.to_items().await, vec![]);
+    }
+
+    #[tokio::test]
+    async fn test_abort() {
+        let id = Uuid::now_v7();
+        let pg = Arc::new(Progress::new(URL, TITLE, EXT));
+        let map = ProgressMap::default();
+
+        map.insert(id, pg.clone()).await;
+        map.abort(id).await;
+        assert_eq!(map.to_items().await, vec![]);
+        assert!(pg.is_canceled());
+    }
+
+    #[tokio::test]
+    async fn test_to_items() {
+        let map = ProgressMap::default();
+        for _ in 0..10 {
+            let id = Uuid::now_v7();
+            let pg = Arc::new(Progress::new(URL, TITLE, EXT));
+            map.insert(id, pg).await;
+        }
+
+        assert_eq!(map.to_items().await.len(), 10);
+    }
+}
