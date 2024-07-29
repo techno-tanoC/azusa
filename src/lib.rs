@@ -45,8 +45,22 @@ impl Engine {
 
         let id = Uuid::now_v7();
         let pg = Arc::new(Progress::new(url.clone(), title.clone(), ext.clone()));
-        let _guard = self.map.insert(id, pg.clone()).await;
 
+        self.map.insert(id, pg.clone()).await;
+        let result = self.do_download(&url, &title, &ext, pg, threshold).await;
+        self.map.remove(id).await;
+
+        result
+    }
+
+    async fn do_download(
+        &self,
+        url: &str,
+        title: &str,
+        ext: &str,
+        pg: Arc<Progress>,
+        threshold: Option<u64>,
+    ) -> Result<bool> {
         let mut temp = async_tempfile::TempFile::new().await?;
         let mut response = self.client.get(url).send().await?;
 
@@ -79,7 +93,7 @@ impl Engine {
         }
 
         // Persist
-        self.persist.persist(&title, &ext, &mut temp).await?;
+        self.persist.persist(title, ext, &mut temp).await?;
 
         Ok(true)
     }
