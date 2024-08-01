@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: ../
-      dockerfile: .devcontainer/Dockerfile
+      dockerfile: docker/server/Dockerfile
     command: sleep infinity
     environment:
       VOLUME: ./volume
