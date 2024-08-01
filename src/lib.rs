@@ -84,11 +84,11 @@ impl Engine {
             pg.progress(chunk.len() as u64);
         }
 
-        // Check file size
-        let len = temp.metadata().await?.len();
-        if let Some(size) = threshold {
-            if size > len {
-                anyhow::bail!("{} < {}", len, size);
+        // Check the size
+        if let Some(threshold) = threshold {
+            let size = pg.size();
+            if size < threshold {
+                anyhow::bail!("{} < {}", size, threshold);
             }
         }
 
