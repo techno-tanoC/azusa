@@ -6,7 +6,9 @@ use axum::{
     routing::{delete, get},
     Json, Router,
 };
+use axum_embed::ServeEmbed;
 use azusa::{Engine, Item};
+use rust_embed::Embed;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -25,10 +27,15 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug, Clone, Embed)]
+#[folder = "client/dist"]
+struct Assets;
+
 fn build(engine: Arc<Engine>) -> Router {
     Router::new()
         .route("/downloads", get(index).post(start))
         .route("/downloads/:id", delete(cancel))
+        .nest_service("/assets", ServeEmbed::<Assets>::new())
         .with_state(engine)
 }
 
