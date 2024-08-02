@@ -1,0 +1,47 @@
+@import 'modern-css-reset';
+
+.list {
+  padding: 5px;
+}
+
+.card {
+  display: flex;
+  margin-bottom: 10px;
+  box-shadow: 2px 2px 4px 0px #ccc;
+  font-size: 0.8em;
+
+  .body {
+    display: flex;
+    position: relative;
+    width: 100%;
+    min-width: 0;
+
+    .progress {
+      position: absolute;
+      height: 100%;
+      z-index: -1;
+      background-color: #eee;
+    }
+
+    .name {
+      flex: 1 1 auto;
+      padding: 10px;
+      align-self: center;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .counts {
+      flex: 0 0 auto;
+      padding: 10px;
+      text-align: end;
+    }
+  }
+
+  .button {
+    padding: 10px;
+    border-style: none;
+    background-color: #248;
+    color: #fff;
+  }
+}
