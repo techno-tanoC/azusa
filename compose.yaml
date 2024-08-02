@@ -1,0 +1,28 @@
+services:
+  app:
+    build:
+      context: ./
+      dockerfile: docker/server/Dockerfile
+    command: bash
+    environment:
+      VOLUME: ./volume
+    init: true
+    volumes:
+      - ./:/workspace
+      - cargo:/usr/local/cargo
+      - target:/workspace/target
+
+  client:
+    build:
+      context: ./
+      dockerfile: docker/client/Dockerfile
+    working_dir: /workspace/client
+    command: ["npm", "run", "start"]
+    ports:
+      - "1234:1234"
+    volumes:
+      - ./:/workspace
+
+volumes:
+  cargo:
+  target:

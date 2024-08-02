@@ -1,0 +1,7 @@
+/target
+/volume
+
+# client
+/client/node_modules
+/client/.parcel-cache
+/client/dist
