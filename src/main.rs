@@ -47,15 +47,15 @@ async fn index(engine: State<Arc<Engine>>) -> Json<Vec<Item>> {
 #[derive(Debug, Clone, Deserialize)]
 struct Params {
     url: String,
-    title: String,
+    name: String,
     ext: String,
 }
 
 async fn start(engine: State<Arc<Engine>>, params: Json<Params>) {
     const FILE_THRESHOLD: u64 = 100 * 1024;
-    let Params { url, title, ext } = params.0;
+    let Params { url, name, ext } = params.0;
     tokio::spawn(async move {
-        if let Err(e) = engine.download(url, title, ext, Some(FILE_THRESHOLD)).await {
+        if let Err(e) = engine.download(url, name, ext, Some(FILE_THRESHOLD)).await {
             println!("{e}");
         }
     });

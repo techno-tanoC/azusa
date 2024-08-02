@@ -13,7 +13,7 @@ const deleteItem = async (id) => {
   await fetch(url, { method: "DELETE" })
 }
 
-const Item = ({id, title, total, size}) => {
+const Item = ({id, name, total, size}) => {
   const percent = `${Math.floor(size * 100 / total)}%`
   const ratio = `${size.toLocaleString()} / ${total.toLocaleString()}`
   return (
@@ -21,7 +21,7 @@ const Item = ({id, title, total, size}) => {
       <div className="body">
         <span style={ { width: percent } } className="progress" />
         <div className="name">
-          { title }
+          { name }
         </div>
         <div className="counts">
           { percent }
@@ -41,7 +41,7 @@ const ItemList = ({items}) => {
     <div className="list">
       {
         items.map(item => (
-          <Item key={ item.id } id={ item.id } title={ item.title } total={ item.total } size={ item.size } />
+          <Item key={ item.id } id={ item.id } name={ item.name } total={ item.total } size={ item.size } />
         ))
       }
     </div>

@@ -7,7 +7,7 @@ use crate::item::Item;
 #[derive(Debug)]
 pub struct Progress {
     url: String,
-    title: String,
+    name: String,
     ext: String,
     total: AtomicU64,
     size: AtomicU64,
@@ -15,10 +15,10 @@ pub struct Progress {
 }
 
 impl Progress {
-    pub fn new(url: impl Into<String>, title: impl Into<String>, ext: impl Into<String>) -> Self {
+    pub fn new(url: impl Into<String>, name: impl Into<String>, ext: impl Into<String>) -> Self {
         Self {
             url: url.into(),
-            title: title.into(),
+            name: name.into(),
             ext: ext.into(),
             total: AtomicU64::new(0),
             size: AtomicU64::new(0),
@@ -54,7 +54,7 @@ impl Progress {
         Item {
             id: id.hyphenated(),
             url: self.url.to_string(),
-            title: self.title.to_string(),
+            name: self.name.to_string(),
             ext: self.ext.to_string(),
             total: self.total(),
             size: self.size(),

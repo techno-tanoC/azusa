@@ -5,7 +5,7 @@ use uuid::fmt::Hyphenated;
 pub struct Item {
     pub id: Hyphenated,
     pub url: String,
-    pub title: String,
+    pub name: String,
     pub ext: String,
     pub total: u64,
     pub size: u64,

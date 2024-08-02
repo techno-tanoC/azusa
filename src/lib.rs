@@ -35,19 +35,19 @@ impl Engine {
     pub async fn download(
         &self,
         url: impl Into<String>,
-        title: impl Into<String>,
+        name: impl Into<String>,
         ext: impl Into<String>,
         threshold: Option<u64>,
     ) -> Result<bool> {
         let url = url.into();
-        let title = title.into();
+        let name = name.into();
         let ext = ext.into();
 
         let id = Uuid::now_v7();
-        let pg = Arc::new(Progress::new(url.clone(), title.clone(), ext.clone()));
+        let pg = Arc::new(Progress::new(url.clone(), name.clone(), ext.clone()));
 
         self.map.insert(id, pg.clone()).await;
-        let result = self.do_download(&url, &title, &ext, pg, threshold).await;
+        let result = self.do_download(&url, &name, &ext, pg, threshold).await;
         self.map.remove(id).await;
 
         result
@@ -56,7 +56,7 @@ impl Engine {
     async fn do_download(
         &self,
         url: &str,
-        title: &str,
+        name: &str,
         ext: &str,
         pg: Arc<Progress>,
         threshold: Option<u64>,
@@ -93,7 +93,7 @@ impl Engine {
         }
 
         // Persist
-        self.persist.persist(title, ext, &mut temp).await?;
+        self.persist.persist(name, ext, &mut temp).await?;
 
         Ok(true)
     }
