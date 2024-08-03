@@ -41,7 +41,7 @@ impl Engine {
         name: impl Into<String>,
         ext: impl Into<String>,
         threshold: Option<u64>,
-    ) -> Result<bool> {
+    ) -> Result<()> {
         let url = url.into();
         let name = name.into();
         let ext = ext.into();
@@ -63,7 +63,7 @@ impl Engine {
         ext: &str,
         pg: Arc<Progress>,
         threshold: Option<u64>,
-    ) -> Result<bool> {
+    ) -> Result<()> {
         let mut temp = async_tempfile::TempFile::new().await?;
         let mut response = self.client.get(url).send().await?;
 
@@ -81,7 +81,7 @@ impl Engine {
         // Download
         while let Some(chunk) = response.chunk().await? {
             if pg.is_canceled() {
-                return Ok(false);
+                return Ok(());
             }
             temp.write_all(&chunk).await?;
             pg.progress(chunk.len() as u64);
@@ -98,7 +98,7 @@ impl Engine {
         // Persist
         self.persist.persist(name, ext, &mut temp).await?;
 
-        Ok(true)
+        Ok(())
     }
 
     pub async fn index(&self) -> Vec<Item> {
