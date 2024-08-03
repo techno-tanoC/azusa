@@ -1,4 +1,4 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use anyhow::Result;
 pub use item::Item;
@@ -21,15 +21,18 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new(dest: impl Into<PathBuf>) -> Self {
-        let client = reqwest::Client::new();
+    pub fn new(dest: impl Into<PathBuf>) -> Result<Self> {
+        let client = reqwest::Client::builder()
+            .connect_timeout(Duration::from_secs(30))
+            .read_timeout(Duration::from_secs(30))
+            .build()?;
         let map = ProgressMap::default();
         let persist = Persist::new(dest.into());
-        Self {
+        Ok(Self {
             client,
             map,
             persist,
-        }
+        })
     }
 
     pub async fn download(
