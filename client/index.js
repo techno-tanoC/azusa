@@ -58,8 +58,8 @@ const Page = () => {
     }
 
     f()
-    // const intervalId = setInterval(f, 1000)
-    // return () => clearInterval(intervalId)
+    const intervalId = setInterval(f, 1000)
+    return () => clearInterval(intervalId)
   }, [])
 
   return (
