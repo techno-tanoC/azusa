@@ -5,6 +5,7 @@ services:
       dockerfile: docker/server/Dockerfile
     command: sleep infinity
     environment:
+      CERT: ./cert
       VOLUME: ./volume
     init: true
     volumes:

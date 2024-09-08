@@ -5,6 +5,7 @@ services:
       dockerfile: docker/server/Dockerfile
     command: bash
     environment:
+      CERT: ./cert
       VOLUME: ./volume
     init: true
     volumes:

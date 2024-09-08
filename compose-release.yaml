@@ -5,6 +5,7 @@ services:
       dockerfile: docker/release/Dockerfile
     image: registry.gitlab.com/techno-tanoc/azusa:0.1.0
     environment:
+      CERT: /workspace/cert
       VOLUME: /workspace/volume
     init: true
     platform: linux/x86_64
@@ -12,3 +13,4 @@ services:
       - "3333:3000"
     volumes:
       - ./volume:/workspace/volume
+      - ./cert:/workspace/cert
