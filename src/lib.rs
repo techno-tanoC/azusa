@@ -8,6 +8,7 @@ use progress_map::ProgressMap;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
+mod cert;
 mod item;
 mod persist;
 mod progress;
@@ -21,11 +22,15 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new(dest: impl Into<PathBuf>) -> Result<Self> {
-        let client = reqwest::Client::builder()
+    pub async fn new(certs: impl Into<PathBuf>, dest: impl Into<PathBuf>) -> Result<Self> {
+        let mut builder = reqwest::Client::builder()
             .connect_timeout(Duration::from_secs(30))
-            .read_timeout(Duration::from_secs(30))
-            .build()?;
+            .read_timeout(Duration::from_secs(30));
+        for cert in cert::trusted_root_certificates(certs.into()).await? {
+            builder = builder.add_root_certificate(cert);
+        }
+        let client = builder.build()?;
+
         let map = ProgressMap::default();
         let persist = Persist::new(dest.into());
         Ok(Self {

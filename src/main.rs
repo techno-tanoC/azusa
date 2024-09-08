@@ -14,10 +14,11 @@ use uuid::Uuid;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let cert = env::var("CERT").expect("CERT is not found");
     let port = env::var("PORT").unwrap_or("3000".to_string()).parse()?;
     let volume = env::var("VOLUME").expect("VOLUME is not found");
 
-    let engine = Arc::new(Engine::new(volume)?);
+    let engine = Arc::new(Engine::new(cert, volume).await?);
     let app = build(engine);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
