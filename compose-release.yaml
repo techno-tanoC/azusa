@@ -3,7 +3,7 @@ services:
     build:
       context: ./
       dockerfile: docker/release/Dockerfile
-    image: registry.gitlab.com/techno-tanoc/azusa:0.1.0
+    image: registry.gitlab.com/techno-tanoc/azusa:0.2.0
     environment:
       CERT: /workspace/cert
       VOLUME: /workspace/volume
